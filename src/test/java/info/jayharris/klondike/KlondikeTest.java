@@ -1,17 +1,11 @@
-package info.jayharris.cardgames.klondike;
+package info.jayharris.klondike;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import info.jayharris.cardgames.Card;
-import info.jayharris.cardgames.Deck;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;

@@ -1,4 +1,4 @@
-package info.jayharris.cardgames.klondike;
+package info.jayharris.klondike;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
@@ -17,16 +17,16 @@ public class Klondike {
     private final Map<Suit, Foundation> foundations;
     public final Rules rules;
     private boolean inProgress;
-    private final ActionSource app;
+//    private final ActionSource app;
 
     private int passes;
     private boolean hasNoNextRound;
 
-    public Klondike(ActionSource app) {
-        this(app, new Rules());
+    public Klondike(/* ActionSource app */) {
+        this(/* app, */new Rules());
     }
 
-    public Klondike(ActionSource app, Rules rules) {
+    public Klondike(/* ActionSource app, */Rules rules) {
         deck = DeckUtils.createStandardDeck();
 
         tableaus = Lists.newArrayListWithCapacity(7);
@@ -41,7 +41,7 @@ public class Klondike {
 
         waste = new Waste();
         this.rules = rules;
-        this.app = app;
+//        this.app = app;
         inProgress = false;
     }
 
@@ -54,22 +54,22 @@ public class Klondike {
         }
     }
 
-    public boolean play() {
-        init();
-
-        passes = 0;
-        hasNoNextRound = true;
-        inProgress = true;
-
-        while (inProgress) {
-            if (app.getAction().doAction(this)) {
-                inProgress = !isGameOver();
-            }
-        }
-
-        // TODO: implement
-        return false;
-    }
+//    public boolean play() {
+//        init();
+//
+//        passes = 0;
+//        hasNoNextRound = true;
+//        inProgress = true;
+//
+//        while (inProgress) {
+//            if (app.getAction().doAction(this)) {
+//                inProgress = !isGameOver();
+//            }
+//        }
+//
+//        // TODO: implement
+//        return false;
+//    }
 
     public boolean isDeckEmpty() {
         return deck.isEmpty();
