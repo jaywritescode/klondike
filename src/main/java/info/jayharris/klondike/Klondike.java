@@ -49,7 +49,7 @@ public class Klondike {
         deck.shuffle();
         for (int i = 0; i < tableaus.size(); ++i) {
             for (int j = i; j < tableaus.size(); ++j) {
-                tableaus.get(j).push(j == i ? deck.dealFaceUp() : deck.dealFaceDown());
+                tableaus.get(j).add(j == i ? deck.dealFaceUp() : deck.dealFaceDown());
             }
         }
     }
