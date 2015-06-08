@@ -200,10 +200,29 @@ public class Klondike {
                 return card.getColor() == last.getColor().opposite() && card.getRank() == last.getRank().lower(Rank.SortType.ACE_LOW);
             }
         }
+
+        @Override
+        public String toString() {
+            if (isEmpty()) {
+                return "[]";
+            }
+
+            StringBuilder sb = new StringBuilder("[");
+            for (int i = 0;;) {
+                sb.append(get(i));
+                if (++i == size()) {
+                    return sb.append("]").toString();
+                }
+                sb.append(", ");
+            }
+        }
     }
 
     class Foundation extends LinkedList<Card> {
-
+        @Override
+        public String toString() {
+            return isEmpty() ? "[]" : peekLast().toString();
+        }
     }
 
     class Waste extends LinkedList<Card> {
