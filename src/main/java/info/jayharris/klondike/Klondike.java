@@ -201,6 +201,16 @@ public class Klondike {
             }
         }
 
+        private int countFaceup() {
+            int count = 0;
+            for (Iterator<Card> iter = descendingIterator(); iter.hasNext(); count++) {
+                if (iter.next().isFacedown()) {
+                    return count;
+                }
+            }
+            return count;
+        }
+
         @Override
         public String toString() {
             if (isEmpty()) {
