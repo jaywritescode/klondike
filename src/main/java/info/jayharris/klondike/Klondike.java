@@ -144,15 +144,29 @@ public class Klondike {
     /**
      * Move one or more cards from one tableau to another.
      *
-     * @param tableau the tableau that we're moving from
-     * @param index the index of the bottom card that we're moving
+     * @param from the tableau that we're moving from
+     * @param to the tableau that we're moving to
+     * @param num the number of cards we're moving
      * @return {@code true} if the move is legal, {@code false} otherwise
      */
-    public boolean moveFromTableauToTableau(Tableau tableau, int index) {
-        Preconditions.checkArgument(!tableau.isEmpty());
+    public boolean moveFromTableauToTableau(Tableau from, Tableau to, int num) {
+        Preconditions.checkArgument(!from.isEmpty());
+        Preconditions.checkArgument(num > 0 && num <= from.countFaceup());
 
+        List<Card> moving = from.subList(from.size() - num, from.size());
+        if (!to.accepts(moving.get(0))) {
+            return false;
+        }
 
-        return false;
+        to.addAll(moving);
+        for (int i = 0; i < num; ++i) {
+            from.removeLast();
+        }
+        if (from.peekLast().isFacedown()) {
+            from.peekLast().flip();
+        }
+
+        return true;
     }
 
     /**
