@@ -10,17 +10,23 @@ import info.jayharris.cardgames.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
+// import static org.mockito.Mockito.mock;
 
 public class KlondikeTest {
 
     Klondike klondike;
+
+    final Logger logger = LoggerFactory.getLogger(KlondikeTest.class);
 
     @Before
     public void setUp() {
@@ -233,7 +239,8 @@ public class KlondikeTest {
     @Test
     public void testMoveFromTableauToTableau() {
         int count;
-        Card card, card2;
+        Card card;
+        Suit suit;
         List<Card> faceup;
         ImmutableList<Card> original1, original2;
         Klondike.Tableau empty = klondike.new Tableau(),
@@ -246,10 +253,18 @@ public class KlondikeTest {
         for (int i = 0; i < count; ++i) {
             tableau1.add(d.dealFaceDown());
         }
+        count = (int) (Math.random() * tableau1.size() == 7 ? 4 : 5) + 1;
+        for (int i = 0; i < count; ++i) {
+            tableau2.add(d.dealFaceDown());
+        }
 
-        // valid move -- king and other cards to empty tableau
+        /******************************************************
+         * valid move -- king and other cards to empty tableau
+         ******************************************************/
+        // get a random king
         tableau1.add(Card.fromString("K" + "CDHS".charAt((int) (Math.random() * 4))));
-        count = (int) (Math.random() * 13);
+        // choose a random number of additional cards to add to the tableau
+        count = (int) (Math.random() * 12);
         buildTableau(tableau1, count);
         original1 = ImmutableList.copyOf(tableau1);
 
@@ -258,41 +273,131 @@ public class KlondikeTest {
         assertEquals(original1.subList(original1.size() - count - 1, original1.size()), empty);
         assertFalse(tableau1.peekLast().isFacedown());
 
-        // invalid move -- non-king and other cards to empty tableau
+        /************************************************************
+         * invalid move -- non-king and other cards to empty tableau
+         ************************************************************/
         empty.clear();
+        // the tableau has one face-up card after moving the king, remove it
         tableau1.removeLast();
+        // and replace it with a random card that's not a king
         while ((card = Card.randomCard()).getRank() == Rank.KING || card.getRank() == Rank.ACE);
         tableau1.add(card);
+        // choose a random number of additional cards to add to the tableau
+        // count + 1 is the number of face-up cards in the tableau
         count = (int) (Math.random() * (card.getRank().value - 2));
         buildTableau(tableau1, count);
         original1 = ImmutableList.copyOf(tableau1);
 
-        assertFalse(klondike.moveFromTableauToTableau(tableau1, empty, count));
+        assertFalse(klondike.moveFromTableauToTableau(tableau1, empty, count + 1));
         assertTrue(empty.isEmpty());
         assertEquals(original1, tableau1);
-        assertEquals(Collections2.filter(original1, isFaceDownPredicate).size(),
-                Collections2.filter(tableau1, isFaceDownPredicate).size());
+        assertEquals(Collections2.filter(original1, Predicates.not(isFaceDownPredicate)).size(),
+                count + 1);
 
-        // valid move -- non-king and other cards to correct rank tableau
+        /*****************************************
+         * valid move -- non-king and other cards
+         *****************************************/
         empty.clear();
-        tableau1.removeLast();
-        while ((card = Card.randomCard()).getRank() == Rank.TWO || card.getRank() == Rank.ACE);
+        // get rid of all the face-up cards in tableau1
+        tableau1.retainAll(Collections2.filter(tableau1, isFaceDownPredicate));
+        // start with a random card that's not a king
+        while ((card = Card.randomCard()).getRank() == Rank.KING || card.getRank() == Rank.ACE);
         tableau1.add(card);
+        // choose a random number of additional cards to add to the tableau
         count = (int) (Math.random() * (card.getRank().value - 2));
         buildTableau(tableau1, count);
         original1 = ImmutableList.copyOf(tableau1);
+        // choose a random face-up card to move to another tableau
         faceup = Lists.newLinkedList(Collections2.filter(tableau1, Predicates.not(isFaceDownPredicate)));
-        while ((card = faceup.get((int) (Math.random() * faceup.size()))).getRank() != Rank.KING);
-        card = new Card(card.getRank(), otherSuitOfSameColor(card.getSuit()));
-        tableau2.removeLast();
-        tableau2.add(card);
+        card = faceup.get(count = (int) (Math.random() * faceup.size()));
+        // put a card on tableau2 so we can move our test card there
+        if (count != 0) {
+            // get the previous card in the tableau, then get the other suit that's the same color
+            suit = otherSuitOfSameColor(faceup.get(count - 1).getSuit());
+        }
+        else {
+            // get a random suit of the appropriate color
+            if (card.getColor() == Suit.Color.RED) {
+                suit = Math.random() < 0.5 ? Suit.CLUBS : Suit.SPADES;
+            }
+            else {
+                suit = Math.random() < 0.5 ? Suit.DIAMONDS : Suit.HEARTS;
+            }
+        }
+        tableau2.add(new Card(card.getRank().higher(), suit));
         original2 = ImmutableList.copyOf(tableau2);
 
-        assertTrue(klondike.moveFromTableauToTableau(tableau1, tableau2, count));
-        assertEquals(original1.subList(0, original1.size() - count), tableau1);
+        assertTrue(klondike.moveFromTableauToTableau(tableau1, tableau2, faceup.size() - count));
+        assertEquals(original1.subList(0, original1.size() - (faceup.size() - count)), tableau1);
         assertEquals(original2, tableau2.subList(0, original2.size()));
-        assertEquals(original2, tableau2.subList(original2.size(), tableau2.size()));
-        assertFalse(tableau1.peekLast().isFacedown());
+        assertEquals(original1.subList(original1.size() - (faceup.size() - count), original1.size()),
+                tableau2.subList(original2.size(), tableau2.size()));
+        if (!tableau1.isEmpty()) {
+            assertFalse(tableau1.peekLast().isFacedown());
+        }
+
+        /****************************
+         * invalid move -- wrong rank
+         ****************************/
+        // get rid of all the face-up cards in both tableaus
+        tableau1.retainAll(Collections2.filter(tableau1, isFaceDownPredicate));
+        tableau2.retainAll(Collections2.filter(tableau2, isFaceDownPredicate));
+        // get a random card for tableau1
+        while ((card = Card.randomCard()).getRank() == Rank.ACE || card.getRank().value <= 4);
+        tableau1.add(card);
+        // choose a random number of additional cards (at least three) to add to the tableau
+        count = (int) (Math.random() * (card.getRank().value - 3) + 3);
+        buildTableau(tableau1, count);
+        original1 = ImmutableList.copyOf(tableau1);
+        // get a random card for tableau2
+        while ((card = Card.randomCard()).getRank() == Rank.ACE);
+        tableau2.add(card);
+        // choose a random number of additional cards to add to the tableau
+        // but don't complete tableau2
+        count = (int) (Math.random() * (card.getRank().value - 3));
+        buildTableau(tableau2, count);
+        original2 = ImmutableList.copyOf(tableau2);
+        // choose a random face-up card from tableau1 that's the opposite color
+        // from the top card on tableau2 and that is not one rank lower than
+        // that card
+        faceup = Lists.newLinkedList(Collections2.filter(tableau1, Predicates.not(isFaceDownPredicate)));
+        while ((card = faceup.get(count = (int) (Math.random() * faceup.size()))).getColor() == tableau2.getLast().getColor() ||
+                card.getRank() == tableau2.getLast().getRank().lower());
+
+        assertFalse(klondike.moveFromTableauToTableau(tableau1, tableau2, faceup.size() - count));
+        assertEquals(original1, tableau1);
+        assertEquals(original2, tableau2);
+
+        /******************************
+         * invalid move -- wrong color
+         ******************************/
+        // get rid of all the face-up cards in tableaus
+        tableau1.retainAll(Collections2.filter(tableau1, isFaceDownPredicate));
+        tableau2.retainAll(Collections2.filter(tableau2, isFaceDownPredicate));
+        // start with a random card that's not a king
+        while ((card = Card.randomCard()).getRank() == Rank.KING || card.getRank() == Rank.ACE);
+        tableau1.add(card);
+        // choose a random number of additional cards to add to the tableau
+        count = (int) (Math.random() * (card.getRank().value - 3) + 1);
+        buildTableau(tableau1, count);
+        original1 = ImmutableList.copyOf(tableau1);
+        // choose a random face-up card to try and move to another tableau
+        faceup = Lists.newLinkedList(Collections2.filter(tableau1, Predicates.not(isFaceDownPredicate)));
+        card = faceup.get(count = (int) (Math.random() * faceup.size()));
+        // put a card on tableau2 so we can move our test card there
+        // get a random suit of the wrong color
+        if (card.getColor() == Suit.Color.RED) {
+            suit = Math.random() < 0.5 ? Suit.DIAMONDS : Suit.HEARTS;
+        }
+        else {
+            suit = Math.random() < 0.5 ? Suit.CLUBS : Suit.SPADES;
+        }
+        tableau2.add(new Card(card.getRank().higher(), suit));
+        original2 = ImmutableList.copyOf(tableau2);
+
+        assertFalse(klondike.moveFromTableauToTableau(tableau1, tableau2, faceup.size() - count));
+        assertEquals(original1, tableau1);
+        assertEquals(original2, tableau2);
     }
 
     /**
