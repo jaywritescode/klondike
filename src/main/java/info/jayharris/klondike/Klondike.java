@@ -162,7 +162,7 @@ public class Klondike {
         for (int i = 0; i < num; ++i) {
             from.removeLast();
         }
-        if (from.peekLast().isFacedown()) {
+        if (!from.isEmpty() && from.peekLast().isFacedown()) {
             from.peekLast().flip();
         }
 
