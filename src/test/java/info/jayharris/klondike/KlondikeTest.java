@@ -20,17 +20,18 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.junit.Assert.*;
-// import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mock;
 
 public class KlondikeTest {
 
     Klondike klondike;
+    KlondikeUI ui = mock(KlondikeUI.class);
 
     final Logger logger = LoggerFactory.getLogger(KlondikeTest.class);
 
     @Before
     public void setUp() {
-        klondike = new Klondike(/* mockActionSource */);
+        klondike = new Klondike(ui);
         klondike.init();
     }
 

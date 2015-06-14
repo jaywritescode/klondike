@@ -17,16 +17,17 @@ public class Klondike {
     private final Map<Suit, Foundation> foundations;
     public final Rules rules;
     private boolean inProgress;
-//    private final ActionSource app;
+
+    private final KlondikeUI ui;
 
     private int passes;
     private boolean hasNoNextRound;
 
-    public Klondike(/* ActionSource app */) {
-        this(/* app, */new Rules());
+    public Klondike(KlondikeUI ui) {
+        this(ui, new Rules());
     }
 
-    public Klondike(/* ActionSource app, */Rules rules) {
+    public Klondike(KlondikeUI ui, Rules rules) {
         deck = DeckUtils.createStandardDeck();
 
         tableaus = Lists.newArrayListWithCapacity(7);
@@ -41,7 +42,7 @@ public class Klondike {
 
         waste = new Waste();
         this.rules = rules;
-//        this.app = app;
+        this.ui = ui;
         inProgress = false;
     }
 
