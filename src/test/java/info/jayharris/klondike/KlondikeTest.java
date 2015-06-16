@@ -31,7 +31,7 @@ public class KlondikeTest {
 
     @Before
     public void setUp() {
-        klondike = new Klondike(ui);
+        klondike = new Klondike();
         klondike.init();
     }
 

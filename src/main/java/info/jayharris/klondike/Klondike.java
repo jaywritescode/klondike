@@ -18,16 +18,14 @@ public class Klondike {
     public final Rules rules;
     private boolean inProgress;
 
-    private final KlondikeUI ui;
-
     private int passes;
     private boolean hasNoNextRound;
 
-    public Klondike(KlondikeUI ui) {
-        this(ui, new Rules());
+    public Klondike() {
+        this(new Rules());
     }
 
-    public Klondike(KlondikeUI ui, Rules rules) {
+    public Klondike(Rules rules) {
         deck = DeckUtils.createStandardDeck();
 
         tableaus = Lists.newArrayListWithCapacity(7);
@@ -42,7 +40,6 @@ public class Klondike {
 
         waste = new Waste();
         this.rules = rules;
-        this.ui = ui;
         inProgress = false;
     }
 
