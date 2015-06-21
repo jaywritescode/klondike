@@ -30,12 +30,12 @@ public class Klondike {
 
         tableaus = Lists.newArrayListWithCapacity(7);
         for (int i = 0; i < 7; ++i) {
-            tableaus.add(new Tableau(i));
+            tableaus.add(new Tableau());
         }
 
         foundations = Maps.newHashMapWithExpectedSize(4);
         for (Suit suit : EnumSet.allOf(Suit.class)) {
-            foundations.put(suit, new Foundation(suit));
+            foundations.put(suit, new Foundation());
         }
 
         waste = new Waste();
@@ -202,12 +202,6 @@ public class Klondike {
     }
 
     class Tableau extends LinkedList<Card> {
-        private final int index;
-
-        public Tableau(int index) {
-            this.index = index;
-        }
-
         public boolean accepts(Card card) {
             if (isEmpty()) {
                 return card.getRank() == Rank.KING;
@@ -230,20 +224,6 @@ public class Klondike {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            Tableau tableau = (Tableau) o;
-            return Objects.equals(index, tableau.index);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), index);
-        }
-
-        @Override
         public String toString() {
             if (isEmpty()) {
                 return "[]";
@@ -261,26 +241,6 @@ public class Klondike {
     }
 
     class Foundation extends LinkedList<Card> {
-        private final Suit suit;
-
-        Foundation(Suit suit) {
-            this.suit = suit;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            if (!super.equals(o)) return false;
-            Foundation cards = (Foundation) o;
-            return Objects.equals(suit, cards.suit);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(super.hashCode(), suit);
-        }
-
         @Override
         public String toString() {
             return isEmpty() ? "[]" : peekLast().toString();
