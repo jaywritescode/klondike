@@ -30,12 +30,12 @@ public class Klondike {
 
         tableaus = Lists.newArrayListWithCapacity(7);
         for (int i = 0; i < 7; ++i) {
-            tableaus.add(new Tableau());
+            tableaus.add(new Tableau(i));
         }
 
         foundations = Maps.newHashMapWithExpectedSize(4);
         for (Suit suit : EnumSet.allOf(Suit.class)) {
-            foundations.put(suit, new Foundation());
+            foundations.put(suit, new Foundation(suit));
         }
 
         waste = new Waste();
@@ -202,6 +202,12 @@ public class Klondike {
     }
 
     class Tableau extends LinkedList<Card> {
+        private final int index;
+
+        public Tableau(int index) {
+            this.index = index;
+        }
+
         public boolean accepts(Card card) {
             if (isEmpty()) {
                 return card.getRank() == Rank.KING;
@@ -224,6 +230,20 @@ public class Klondike {
         }
 
         @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            Tableau tableau = (Tableau) o;
+            return Objects.equals(index, tableau.index);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), index);
+        }
+
+        @Override
         public String toString() {
             if (isEmpty()) {
                 return "[]";
@@ -241,6 +261,26 @@ public class Klondike {
     }
 
     class Foundation extends LinkedList<Card> {
+        private final Suit suit;
+
+        Foundation(Suit suit) {
+            this.suit = suit;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            Foundation cards = (Foundation) o;
+            return Objects.equals(suit, cards.suit);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(super.hashCode(), suit);
+        }
+
         @Override
         public String toString() {
             return isEmpty() ? "[]" : peekLast().toString();
@@ -248,7 +288,23 @@ public class Klondike {
     }
 
     class Waste extends LinkedList<Card> {
+        @Override
+        public String toString() {
+            StringBuffer sb = new StringBuffer("[]");
+            if (this.isEmpty()) {
+                return sb.toString();
+            }
 
+            for (int i = 1; i <= Math.min(this.size(), 6); ++i) {
+                sb.insert(1, this.get(this.size() - i).toString());
+                if (i >= this.size()) {
+                    return sb.toString();
+                }
+                sb.insert(1, " ");
+            }
+            sb.insert(1, "...");
+            return sb.toString();
+        }
     }
 
     public static class Rules {
