@@ -1,5 +1,6 @@
 package info.jayharris.klondike;
 
+import com.google.common.base.Strings;
 import com.googlecode.blacken.colors.ColorNames;
 import com.googlecode.blacken.colors.ColorPalette;
 import com.googlecode.blacken.swing.SwingTerminal;
@@ -20,6 +21,8 @@ public class TerminalUI implements KlondikeUI {
     }
 
     protected boolean loop() {
+        StringBuffer deckSb = new StringBuffer();
+
         int ch = BlackenKeys.KEY_NO_KEY;
         if (palette.containsKey("White")) {
             term.setCurBackground("White");
@@ -32,15 +35,21 @@ public class TerminalUI implements KlondikeUI {
         this.term.clear();
 
         while (!this.quit) {
-            term.puts(">");
+            if (klondike.isDeckEmpty()) {
+                deckSb.append("[empty...]");
+            }
+            else {
+                deckSb.append("[")
+                        .append(Strings.padStart(
+                                String.valueOf(klondike.getDeck().size()), 2, ' '))
+                        .append(" cards]");
+            }
+
             // getch automatically does a refresh
             ch = term.getch();
-            term.puts(BlackenKeys.toString(ch));
-            if (ch == BlackenKeys.KEY_F10) {
-                this.quit = true;
-            }
-            term.puts("\n");
+            term.puts(deckSb.toString());
         }
+
         term.refresh();
         return this.quit;
     }
