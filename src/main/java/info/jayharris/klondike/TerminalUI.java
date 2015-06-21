@@ -90,11 +90,7 @@ public class TerminalUI implements KlondikeUI {
     }
 
     private String deckToString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("[");
-        sb.append(Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' '));
-        sb.append("]");
-        return sb.toString();
+        return "[" + Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + "]";
     }
 
     private String wasteToString() {
@@ -103,7 +99,7 @@ public class TerminalUI implements KlondikeUI {
 
     private String foundationsToString() {
         Klondike.Foundation foundation;
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
 
         for (Suit suit : EnumSet.allOf(Suit.class)) {
             foundation = klondike.getFoundation(suit);
