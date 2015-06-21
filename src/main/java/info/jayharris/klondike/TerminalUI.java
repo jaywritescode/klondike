@@ -21,14 +21,16 @@ public class TerminalUI implements KlondikeUI {
 
     protected boolean loop() {
         int ch = BlackenKeys.KEY_NO_KEY;
-        if (palette.containsKey("Black")) {
-            term.setCurBackground("Black");
-        }
         if (palette.containsKey("White")) {
-            term.setCurForeground("White");
+            term.setCurBackground("White");
+        }
+        if (palette.containsKey("Black")) {
+            term.setCurForeground("Black");
         }
         term.puts("Terminal Interface\n");
         term.puts("Press F10 to quit.\n");
+        this.term.clear();
+
         while (!this.quit) {
             term.puts(">");
             // getch automatically does a refresh
