@@ -41,8 +41,6 @@ public class TerminalUI implements KlondikeUI {
         if (palette.containsKey("Black")) {
             term.setCurForeground("Black");
         }
-        term.puts("Terminal Interface\n");
-        term.puts("Press F10 to quit.\n");
         this.term.clear();
 
         while (!this.quit) {
