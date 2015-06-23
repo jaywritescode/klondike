@@ -60,6 +60,12 @@ public class TerminalUI implements KlondikeUI {
                 }
                 x += 2 + SPACE_BETWEEN;
             }
+
+            // getch automatically does a refresh
+            ch = term.getch();
+            if (ch != BlackenKeys.NO_KEY) {
+                doAction(ch);
+            }
         }
 
         term.refresh();
@@ -81,6 +87,20 @@ public class TerminalUI implements KlondikeUI {
         }
         this.palette = palette;
         this.term.setPalette(palette);
+
+        start();
+    }
+
+    private void doAction(int ch) {
+        switch(ch) {
+            case 'd':
+            case 'D':
+                klondike.deal();
+                break;
+            default:
+                System.out.println("some other letter");
+                break;
+        }
     }
 
     private String deckToString() {
@@ -106,6 +126,10 @@ public class TerminalUI implements KlondikeUI {
             sb.insert(0, Strings.repeat(" ", SPACE_BETWEEN));
         }
         return sb.delete(0, SPACE_BETWEEN).toString();
+    }
+
+    private void start() {
+        klondike.init();
     }
 
     public void quit() {
