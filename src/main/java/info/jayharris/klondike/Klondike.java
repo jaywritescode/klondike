@@ -78,6 +78,18 @@ public class Klondike {
         return false;
     }
 
+    public boolean deal() {
+        if (isDeckEmpty()) {
+            return restartDeck();
+        }
+        else {
+            for (int i = 0; i < rules.getDeal() && !isDeckEmpty(); ++i) {
+                moveCardToWaste();
+            }
+            return true;
+        }
+    }
+
     /**
      * Move a card from the deck to the waste.
      *
@@ -89,7 +101,7 @@ public class Klondike {
     }
 
     /**
-     * Move a card from the waste to a tableau.
+     * Move a card from the end of the waste to a tableau.
      *
      * @return {@code true} if the move is legal, {@code false} otherwise
      */
@@ -247,6 +259,11 @@ public class Klondike {
         }
     }
 
+    /**
+     * Waste.
+     *
+     * Cards are removed from the end of the waste, i.e. {@code waste[waste.length - 1]}.
+     */
     class Waste extends LinkedList<Card> {
         @Override
         public String toString() {

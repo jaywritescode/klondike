@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Random;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.*;
 import static org.mockito.Mockito.mock;
 
 public class KlondikeTest {
@@ -33,6 +34,40 @@ public class KlondikeTest {
     public void setUp() {
         klondike = new Klondike();
         klondike.init();
+    }
+
+    @Test
+    public void testDeal() {
+        logger.debug(klondike.getDeck().toString());
+
+        int deckSize = klondike.getDeck().size(),
+                cardsToMove = klondike.rules.getDeal();
+        ImmutableList<Card> originalDeck = ImmutableList.copyOf(klondike.getDeck());
+
+        assertTrue(klondike.deal());
+        assertEquals(originalDeck.subList(0, cardsToMove), klondike.getWaste());
+        assertEquals(originalDeck.subList(cardsToMove, deckSize), klondike.getDeck());
+
+        assertTrue(klondike.deal());
+        assertEquals(originalDeck.subList(0, cardsToMove * 2), klondike.getWaste());
+        assertEquals(originalDeck.subList(cardsToMove * 2, deckSize), klondike.getDeck());
+
+        // keep dealing until the deck is empty
+        while (!klondike.isDeckEmpty()) {
+            klondike.deal();
+        }
+        assertTrue(klondike.deal());
+        assertEquals(originalDeck, klondike.getDeck());
+        assertTrue(klondike.getWaste().isEmpty());
+
+        assumeTrue(klondike.rules.getDeal() > 1);
+        while (klondike.getDeck().size() >= klondike.rules.getDeal()) {
+            klondike.getDeck().removeFirst();
+        }
+        originalDeck = ImmutableList.copyOf(klondike.getDeck());
+        assertTrue(klondike.deal());
+        assertTrue(klondike.getDeck().isEmpty());
+        assertEquals(originalDeck, klondike.getWaste());
     }
 
     @Test
