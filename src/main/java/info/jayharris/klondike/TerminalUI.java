@@ -23,11 +23,9 @@ public class TerminalUI implements KlondikeUI {
             LEFT_COL = 5,
             SPACE_BETWEEN = 3,
             TABLEAU_ROW = 2,
-            TABLEAUS_WIDTH = LEFT_COL + (2 * 7) + (SPACE_BETWEEN * 6),
+            WASTE_START_COL = LEFT_COL + "[24 cards]".length() + SPACE_BETWEEN,
             WASTE_MAX_WIDTH = "[... XX XX XX XX XX XX]".length(),
-            FOUNDATION_START_COL = Math.max(
-                    TABLEAUS_WIDTH - (2 * 4) - (SPACE_BETWEEN * 3),
-                    LEFT_COL + 2 + SPACE_BETWEEN + WASTE_MAX_WIDTH + SPACE_BETWEEN);
+            FOUNDATION_START_COL = WASTE_START_COL + WASTE_MAX_WIDTH + SPACE_BETWEEN;
 
     public TerminalUI(Klondike klondike) {
         this.klondike = klondike;
@@ -44,14 +42,12 @@ public class TerminalUI implements KlondikeUI {
         this.term.clear();
 
         while (!this.quit) {
-            // getch automatically does a refresh
-            ch = term.getch();
             term.mvputs(START_ROW, LEFT_COL, deckToString());
-            term.mvputs(START_ROW, LEFT_COL + 2 + SPACE_BETWEEN, wasteToString());
+            term.mvputs(START_ROW, LEFT_COL + "[24 cards]".length() + SPACE_BETWEEN, wasteToString());
             term.mvputs(START_ROW, FOUNDATION_START_COL, foundationsToString());
 
             Klondike.Tableau tableau;
-            int x = LEFT_COL;
+            int x = LEFT_COL + 1;
             for (int i = 0; i < 7; ++i) {
                 tableau = klondike.getTableau(i);
                 if (tableau.isEmpty()) {
@@ -88,7 +84,7 @@ public class TerminalUI implements KlondikeUI {
     }
 
     private String deckToString() {
-        return "[" + Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + "]";
+        return "[" + Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + " cards]";
     }
 
     private String wasteToString() {
