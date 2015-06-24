@@ -35,7 +35,7 @@ public class Klondike {
 
         foundations = Maps.newHashMapWithExpectedSize(4);
         for (Suit suit : EnumSet.allOf(Suit.class)) {
-            foundations.put(suit, new Foundation());
+            foundations.put(suit, new Foundation(suit));
         }
 
         waste = new Waste();
@@ -253,6 +253,12 @@ public class Klondike {
     }
 
     class Foundation extends LinkedList<Card> {
+        final Suit suit;
+
+        public Foundation(Suit suit) {
+            this.suit = suit;
+        }
+
         @Override
         public String toString() {
             return isEmpty() ? "[]" : peekLast().toString();

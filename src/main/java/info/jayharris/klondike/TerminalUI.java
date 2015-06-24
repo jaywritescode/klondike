@@ -7,9 +7,10 @@ import com.googlecode.blacken.swing.SwingTerminal;
 import com.googlecode.blacken.terminal.BlackenKeys;
 import com.googlecode.blacken.terminal.CursesLikeAPI;
 import com.googlecode.blacken.terminal.TerminalInterface;
+import info.jayharris.cardgames.Deck;
 import info.jayharris.cardgames.Suit;
 
-import java.util.EnumSet;
+import java.util.*;
 
 public class TerminalUI implements KlondikeUI {
 
@@ -18,6 +19,11 @@ public class TerminalUI implements KlondikeUI {
     private boolean quit;
     private ColorPalette palette;
     private CursesLikeAPI term = null;
+
+    private TerminalUIComponent<?> deckUIComponent,
+            wasteUIComponent;
+    private Map<Suit, TerminalUIComponent<Klondike.Foundation>> foundationUIComponents;
+    private List<TableauUIComponent> tableauUIComponents;
 
     public final int START_ROW = 0,
             LEFT_COL = 5,
@@ -42,23 +48,13 @@ public class TerminalUI implements KlondikeUI {
         this.term.clear();
 
         while (!this.quit) {
-            term.mvputs(START_ROW, LEFT_COL, deckToString());
-            term.mvputs(START_ROW, LEFT_COL + "[24 cards]".length() + SPACE_BETWEEN, wasteToString());
-            term.mvputs(START_ROW, FOUNDATION_START_COL, foundationsToString());
-
-            Klondike.Tableau tableau;
-            int x = LEFT_COL + 1;
-            for (int i = 0; i < 7; ++i) {
-                tableau = klondike.getTableau(i);
-                if (tableau.isEmpty()) {
-                    term.mvputs(TABLEAU_ROW, x, "  ");
-                }
-                else {
-                    for (int j = 0; j < tableau.size(); ++j) {
-                        term.mvputs(TABLEAU_ROW + j, x, tableau.get(j).toString());
-                    }
-                }
-                x += 2 + SPACE_BETWEEN;
+            deckUIComponent.writeToTerminal();
+            wasteUIComponent.writeToTerminal();
+            for (TerminalUIComponent<Klondike.Foundation> foundation : foundationUIComponents.values()) {
+                foundation.writeToTerminal();
+            }
+            for (TableauUIComponent tableau : tableauUIComponents) {
+                tableau.writeToTerminal();
             }
 
             // getch automatically does a refresh
@@ -88,11 +84,34 @@ public class TerminalUI implements KlondikeUI {
         this.palette = palette;
         this.term.setPalette(palette);
 
+        this.deckUIComponent = new TerminalUIComponent<Deck>(klondike.getDeck(), LEFT_COL, START_ROW) {
+            @Override
+            public void writeToTerminal() {
+                super.writeToTerminal("[" + Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + " cards]");
+            }
+        };
+        this.wasteUIComponent = new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), WASTE_START_COL, START_ROW);
+        this.foundationUIComponents = new HashMap<Suit, TerminalUIComponent<Klondike.Foundation>>() {{
+            int col = FOUNDATION_START_COL;
+            for (Suit suit : EnumSet.allOf(Suit.class)) {
+                this.put(suit, new TerminalUIComponent<Klondike.Foundation>(klondike.getFoundation(suit), col, START_ROW));
+                col += "XX".length() + SPACE_BETWEEN;
+            }
+        }};
+        this.tableauUIComponents = new ArrayList<TableauUIComponent>() {{
+            int col = LEFT_COL;
+            for (int i = 0; i < 7; ++i) {
+                this.add(new TableauUIComponent(klondike.getTableau(i), col));
+                col += "XX".length() + SPACE_BETWEEN;
+            }
+        }};
+
+
         start();
     }
 
     private void doAction(int ch) {
-        switch(ch) {
+        switch (ch) {
             case 'd':
             case 'D':
                 klondike.deal();
@@ -103,31 +122,6 @@ public class TerminalUI implements KlondikeUI {
         }
     }
 
-    private String deckToString() {
-        return "[" + Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + " cards]";
-    }
-
-    private String wasteToString() {
-        return klondike.getWaste().toString();
-    }
-
-    private String foundationsToString() {
-        Klondike.Foundation foundation;
-        StringBuilder sb = new StringBuilder();
-
-        for (Suit suit : EnumSet.allOf(Suit.class)) {
-            foundation = klondike.getFoundation(suit);
-            if (foundation.isEmpty()) {
-                sb.insert(0, Strings.repeat(suit.toString(), 2));
-            }
-            else {
-                sb.insert(0, foundation.peekLast().toString());
-            }
-            sb.insert(0, Strings.repeat(" ", SPACE_BETWEEN));
-        }
-        return sb.delete(0, SPACE_BETWEEN).toString();
-    }
-
     private void start() {
         klondike.init();
     }
@@ -135,6 +129,41 @@ public class TerminalUI implements KlondikeUI {
     public void quit() {
         this.quit = true;
         term.quit();
+    }
+
+    public class TerminalUIComponent<T> {
+        T payload;
+        int row, column;
+
+        public TerminalUIComponent(T payload, int row, int column) {
+            this.payload = payload;
+            this.row = row;
+            this.column = column;
+        }
+
+        public void writeToTerminal() {
+            this.writeToTerminal(payload.toString());
+        }
+
+        public void writeToTerminal(String str) {
+            term.mvputs(column, row, str);
+        }
+    }
+
+    public class TableauUIComponent extends TerminalUIComponent<Klondike.Tableau> {
+        public TableauUIComponent(Klondike.Tableau payload, int column) {
+            super(payload, TABLEAU_ROW, column);
+        }
+
+        public void writeToTerminal() {
+            if (payload.isEmpty()) {
+                term.mvputs(column, row, "  ");
+            } else {
+                for (int i = 0; i < payload.size(); ++i) {
+                    term.mvputs(row + i, column, payload.get(i).toString());
+                }
+            }
+        }
     }
 
     public static void main(String[] args) {
