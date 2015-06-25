@@ -21,7 +21,7 @@ public class TerminalUI implements KlondikeUI {
     private CursesLikeAPI term = null;
 
     private TerminalUIComponent<?> deckUIComponent,
-            wasteUIComponent;
+            wasteUIComponent, pointingTo = null;
     private Map<Suit, TerminalUIComponent<Klondike.Foundation>> foundationUIComponents;
     private List<TableauUIComponent> tableauUIComponents;
 
@@ -60,7 +60,7 @@ public class TerminalUI implements KlondikeUI {
             // getch automatically does a refresh
             ch = term.getch();
             if (ch != BlackenKeys.NO_KEY) {
-                doAction(ch);
+                onKeyPress(ch);
             }
         }
 
@@ -89,12 +89,22 @@ public class TerminalUI implements KlondikeUI {
             public void writeToTerminal() {
                 super.writeToTerminal("[" + Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + " cards]");
             }
+
+            @Override
+            public void doAction() {
+                klondike.deal();
+            }
         };
-        this.wasteUIComponent = new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), WASTE_START_COL, START_ROW);
+        this.wasteUIComponent = new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), WASTE_START_COL, START_ROW) {
+            @Override
+            public void doAction() {
+                System.out.println("waste");
+            }
+        };
         this.foundationUIComponents = new HashMap<Suit, TerminalUIComponent<Klondike.Foundation>>() {{
             int col = FOUNDATION_START_COL;
             for (Suit suit : EnumSet.allOf(Suit.class)) {
-                this.put(suit, new TerminalUIComponent<Klondike.Foundation>(klondike.getFoundation(suit), col, START_ROW));
+                this.put(suit, new FoundationUIComponent(klondike.getFoundation(suit), col));
                 col += "XX".length() + SPACE_BETWEEN;
             }
         }};
@@ -106,20 +116,58 @@ public class TerminalUI implements KlondikeUI {
             }
         }};
 
-
         start();
     }
 
-    private void doAction(int ch) {
+    private void onKeyPress(int ch) {
         switch (ch) {
             case 'd':
             case 'D':
                 klondike.deal();
                 break;
-            default:
-                System.out.println("some other letter");
+            case 'h':
+            case 'H':
+            case BlackenKeys.KEY_LEFT:
+                movePointerLeft();
                 break;
+            case 'l':
+            case 'L':
+            case BlackenKeys.KEY_RIGHT:
+                movePointerRight();
+                break;
+            case BlackenKeys.KEY_ENTER:
+
+            default:
         }
+    }
+
+    private void movePointerRight() {
+        int tmp;
+        if (pointingTo == deckUIComponent) {
+            pointingTo = wasteUIComponent;
+        }
+        else if (pointingTo == wasteUIComponent) {
+            pointingTo = tableauUIComponents.get(0);
+        }
+        else if ((tmp = tableauUIComponents.indexOf(pointingTo)) > -1) {
+            if (tmp + 1 < tableauUIComponents.size()) {
+                pointingTo = tableauUIComponents.get(tmp + 1);
+            }
+            else if (false) {
+                // move to the correct foundation if we're holding a card
+            }
+            else {
+                pointingTo = deckUIComponent;
+            }
+        }
+        else {
+            // we're pointing at a foundation
+            pointingTo = deckUIComponent;
+        }
+    }
+
+    private void movePointerLeft() {
+
     }
 
     private void start() {
@@ -131,7 +179,7 @@ public class TerminalUI implements KlondikeUI {
         term.quit();
     }
 
-    public class TerminalUIComponent<T> {
+    public abstract class TerminalUIComponent<T> {
         T payload;
         int row, column;
 
@@ -141,12 +189,25 @@ public class TerminalUI implements KlondikeUI {
             this.column = column;
         }
 
+        public abstract void doAction();
+
         public void writeToTerminal() {
             this.writeToTerminal(payload.toString());
         }
 
         public void writeToTerminal(String str) {
             term.mvputs(column, row, str);
+        }
+    }
+
+    public class FoundationUIComponent extends TerminalUIComponent<Klondike.Foundation> {
+        public FoundationUIComponent(Klondike.Foundation payload, int column) {
+            super(payload, column, START_ROW);
+        }
+
+        @Override
+        public void doAction() {
+            System.out.println("foundation: " + payload.suit.toString());
         }
     }
 
@@ -164,6 +225,8 @@ public class TerminalUI implements KlondikeUI {
                 }
             }
         }
+
+        public void doAction() {}
     }
 
     public static void main(String[] args) {
