@@ -146,9 +146,7 @@ public class Klondike {
         Preconditions.checkArgument(!tableau.isEmpty());
         Card card = tableau.peekLast();
         Foundation foundation = foundations.get(card.getSuit());
-
-        return card.getRank().lower() == foundation.peekLast().getRank() &&
-                foundation.add(tableau.removeLast());
+        return foundation.accepts(card) && foundation.add(tableau.removeLast());
     }
 
     /**
@@ -257,6 +255,14 @@ public class Klondike {
 
         public Foundation(Suit suit) {
             this.suit = suit;
+        }
+
+        public boolean accepts(Card card) {
+            Preconditions.checkArgument(!card.isFacedown());
+            if (card.getSuit() == suit) {
+                return card.getRank() == (isEmpty() ? Rank.ACE : peekLast().getRank().higher());
+            }
+            return false;
         }
 
         @Override
