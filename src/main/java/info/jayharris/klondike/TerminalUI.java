@@ -7,9 +7,13 @@ import com.googlecode.blacken.swing.SwingTerminal;
 import com.googlecode.blacken.terminal.BlackenKeys;
 import com.googlecode.blacken.terminal.CursesLikeAPI;
 import com.googlecode.blacken.terminal.TerminalInterface;
+import info.jayharris.cardgames.Card;
 import info.jayharris.cardgames.Deck;
 import info.jayharris.cardgames.Suit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class TerminalUI implements KlondikeUI {
@@ -19,11 +23,10 @@ public class TerminalUI implements KlondikeUI {
     private boolean quit;
     private ColorPalette palette;
     private CursesLikeAPI term = null;
+    private Card current = null;
 
-    private TerminalUIComponent<?> deckUIComponent,
-            wasteUIComponent, pointingTo = null;
-    private Map<Suit, TerminalUIComponent<Klondike.Foundation>> foundationUIComponents;
-    private List<TableauUIComponent> tableauUIComponents;
+    private TerminalUIComponent<?> pointingTo;
+    private List<TerminalUIComponent<?>> componentOrder;
 
     public final int START_ROW = 0,
             LEFT_COL = 5,
@@ -33,12 +36,14 @@ public class TerminalUI implements KlondikeUI {
             WASTE_MAX_WIDTH = "[... XX XX XX XX XX XX]".length(),
             FOUNDATION_START_COL = WASTE_START_COL + WASTE_MAX_WIDTH + SPACE_BETWEEN;
 
+    final Logger logger = LoggerFactory.getLogger(TerminalUI.class);
+
     public TerminalUI(Klondike klondike) {
         this.klondike = klondike;
     }
 
     protected boolean loop() {
-        int ch = BlackenKeys.KEY_NO_KEY;
+        int key = BlackenKeys.NO_KEY;
         if (palette.containsKey("White")) {
             term.setCurBackground("White");
         }
@@ -48,20 +53,12 @@ public class TerminalUI implements KlondikeUI {
         this.term.clear();
 
         while (!this.quit) {
-            deckUIComponent.writeToTerminal();
-            wasteUIComponent.writeToTerminal();
-            for (TerminalUIComponent<Klondike.Foundation> foundation : foundationUIComponents.values()) {
-                foundation.writeToTerminal();
+            for (TerminalUIComponent<?> component : componentOrder) {
+                component.writeToTerminal();
             }
-            for (TableauUIComponent tableau : tableauUIComponents) {
-                tableau.writeToTerminal();
-            }
-
+            key = term.getch();
             // getch automatically does a refresh
-            ch = term.getch();
-            if (ch != BlackenKeys.NO_KEY) {
-                onKeyPress(ch);
-            }
+            onKeyPress(key);
         }
 
         term.refresh();
@@ -84,86 +81,74 @@ public class TerminalUI implements KlondikeUI {
         this.palette = palette;
         this.term.setPalette(palette);
 
-        this.deckUIComponent = new TerminalUIComponent<Deck>(klondike.getDeck(), LEFT_COL, START_ROW) {
-            @Override
-            public void writeToTerminal() {
-                super.writeToTerminal("[" + Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + " cards]");
-            }
+        // set up all of the deck, waste, foundation, tableau visual components
+        componentOrder = new ArrayList<TerminalUIComponent<?>>() {{
+            int col;
 
-            @Override
-            public void doAction() {
-                klondike.deal();
-            }
-        };
-        this.wasteUIComponent = new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), WASTE_START_COL, START_ROW) {
-            @Override
-            public void doAction() {
-                System.out.println("waste");
-            }
-        };
-        this.foundationUIComponents = new HashMap<Suit, TerminalUIComponent<Klondike.Foundation>>() {{
-            int col = FOUNDATION_START_COL;
+            this.add(new TerminalUIComponent<Deck>(klondike.getDeck(), LEFT_COL, START_ROW) {
+                @Override
+                public void writeToTerminal() {
+                    super.writeToTerminal("[" +
+                            Strings.padStart(Integer.toString(klondike.getDeck().size()), 2, ' ') + " cards]");
+                }
+
+                @Override
+                public void doAction() {
+                    klondike.deal();
+                }
+            });
+
+            this.add(new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), WASTE_START_COL, START_ROW) {
+                @Override
+                public void doAction() {
+                    current = (current == null ? payload.getLast() : null);
+                }
+            });
+
+            col = FOUNDATION_START_COL;
             for (Suit suit : EnumSet.allOf(Suit.class)) {
-                this.put(suit, new FoundationUIComponent(klondike.getFoundation(suit), col));
+                this.add(new FoundationUIComponent(klondike.getFoundation(suit), col));
                 col += "XX".length() + SPACE_BETWEEN;
             }
-        }};
-        this.tableauUIComponents = new ArrayList<TableauUIComponent>() {{
-            int col = LEFT_COL;
+
+            col = LEFT_COL;
             for (int i = 0; i < 7; ++i) {
                 this.add(new TableauUIComponent(klondike.getTableau(i), col));
                 col += "XX".length() + SPACE_BETWEEN;
             }
         }};
+        pointingTo = componentOrder.get(0);
 
         start();
     }
 
-    private void onKeyPress(int ch) {
-        switch (ch) {
-            case 'd':
-            case 'D':
-                klondike.deal();
+    private void onKeyPress(int codepoint) {
+        switch (codepoint) {
+            case 'z':
+            case 'Z':
+                pointingTo.doAction();
                 break;
-            case 'h':
-            case 'H':
-            case BlackenKeys.KEY_LEFT:
+            case 'a':
+            case 'A':
                 movePointerLeft();
                 break;
-            case 'l':
-            case 'L':
-            case BlackenKeys.KEY_RIGHT:
+            case 'd':
+            case 'D':
                 movePointerRight();
                 break;
-            case BlackenKeys.KEY_ENTER:
-
+            case 's':
+            case 'S':
+                break;
+            case 'w':
+            case 'W':
+                break;
             default:
+                break;
         }
     }
 
     private void movePointerRight() {
-        int tmp;
-        if (pointingTo == deckUIComponent) {
-            pointingTo = wasteUIComponent;
-        }
-        else if (pointingTo == wasteUIComponent) {
-            pointingTo = tableauUIComponents.get(0);
-        }
-        else if ((tmp = tableauUIComponents.indexOf(pointingTo)) > -1) {
-            if (tmp + 1 < tableauUIComponents.size()) {
-                pointingTo = tableauUIComponents.get(tmp + 1);
-            }
-            else if (false) {
-                // move to the correct foundation if we're holding a card
-            }
-            else {
-                pointingTo = deckUIComponent;
-            }
-        }
-        else {
-            // we're pointing at a foundation
-            pointingTo = deckUIComponent;
-        }
+
     }
 
     private void movePointerLeft() {
