@@ -26,6 +26,9 @@ public class TerminalUI implements KlondikeUI {
     private TerminalUIComponent<?> pointingTo;
     private List<TerminalUIComponent<?>> components;
     private LoopingListIterator<TerminalUIComponent<?>> componentOrder;
+    private boolean lastDirectionRight = true;      // direction of last move --
+                                                    // if componentOrder.next() => X, then an immediate call to
+                                                    // componentOrder.previous() will also => X.
 
     public final int START_ROW = 0,
             LEFT_COL = 5,
@@ -149,10 +152,18 @@ public class TerminalUI implements KlondikeUI {
 
     private void movePointerRight() {
         pointingTo = componentOrder.next();
+        if (!lastDirectionRight) {
+            pointingTo = componentOrder.next();
+            lastDirectionRight = true;
+        }
     }
 
     private void movePointerLeft() {
         pointingTo = componentOrder.previous();
+        if (lastDirectionRight) {
+            pointingTo = componentOrder.previous();
+            lastDirectionRight = false;
+        }
     }
 
     private void start() {
