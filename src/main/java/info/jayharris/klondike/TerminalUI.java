@@ -105,15 +105,15 @@ public class TerminalUI implements KlondikeUI {
                 }
             });
 
-            col = FOUNDATION_START_COL;
-            for (Suit suit : EnumSet.allOf(Suit.class)) {
-                this.add(new FoundationUIComponent(klondike.getFoundation(suit), col));
-                col += "XX".length() + SPACE_BETWEEN;
-            }
-
             col = LEFT_COL;
             for (int i = 0; i < 7; ++i) {
                 this.add(new TableauUIComponent(klondike.getTableau(i), col));
+                col += "XX".length() + SPACE_BETWEEN;
+            }
+
+            col = FOUNDATION_START_COL;
+            for (Suit suit : EnumSet.allOf(Suit.class)) {
+                this.add(new FoundationUIComponent(klondike.getFoundation(suit), col));
                 col += "XX".length() + SPACE_BETWEEN;
             }
         }};
