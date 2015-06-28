@@ -7,13 +7,12 @@ import com.googlecode.blacken.swing.SwingTerminal;
 import com.googlecode.blacken.terminal.BlackenKeys;
 import com.googlecode.blacken.terminal.CursesLikeAPI;
 import com.googlecode.blacken.terminal.TerminalInterface;
-import info.jayharris.cardgames.Card;
 import info.jayharris.cardgames.Deck;
 import info.jayharris.cardgames.Suit;
+import org.apache.commons.collections4.iterators.LoopingListIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class TerminalUI implements KlondikeUI {
@@ -23,10 +22,10 @@ public class TerminalUI implements KlondikeUI {
     private boolean quit;
     private ColorPalette palette;
     private CursesLikeAPI term = null;
-    private Card current = null;
 
     private TerminalUIComponent<?> pointingTo;
-    private List<TerminalUIComponent<?>> componentOrder;
+    private List<TerminalUIComponent<?>> components;
+    private LoopingListIterator<TerminalUIComponent<?>> componentOrder;
 
     public final int START_ROW = 0,
             LEFT_COL = 5,
@@ -53,7 +52,7 @@ public class TerminalUI implements KlondikeUI {
         this.term.clear();
 
         while (!this.quit) {
-            for (TerminalUIComponent<?> component : componentOrder) {
+            for (TerminalUIComponent<?> component : components) {
                 component.writeToTerminal();
             }
             key = term.getch();
@@ -82,7 +81,7 @@ public class TerminalUI implements KlondikeUI {
         this.term.setPalette(palette);
 
         // set up all of the deck, waste, foundation, tableau visual components
-        componentOrder = new ArrayList<TerminalUIComponent<?>>() {{
+        components = new ArrayList<TerminalUIComponent<?>>() {{
             int col;
 
             this.add(new TerminalUIComponent<Deck>(klondike.getDeck(), LEFT_COL, START_ROW) {
@@ -94,14 +93,14 @@ public class TerminalUI implements KlondikeUI {
 
                 @Override
                 public void doAction() {
-                    klondike.deal();
+                    System.err.println("deck");
                 }
             });
 
             this.add(new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), WASTE_START_COL, START_ROW) {
                 @Override
                 public void doAction() {
-                    current = (current == null ? payload.getLast() : null);
+                    System.err.println("waste");
                 }
             });
 
@@ -117,7 +116,8 @@ public class TerminalUI implements KlondikeUI {
                 col += "XX".length() + SPACE_BETWEEN;
             }
         }};
-        pointingTo = componentOrder.get(0);
+        componentOrder = new LoopingListIterator(components);
+        pointingTo = componentOrder.next();
 
         start();
     }
@@ -148,11 +148,11 @@ public class TerminalUI implements KlondikeUI {
     }
 
     private void movePointerRight() {
-
+        pointingTo = componentOrder.next();
     }
 
     private void movePointerLeft() {
-
+        pointingTo = componentOrder.previous();
     }
 
     private void start() {
@@ -176,6 +176,10 @@ public class TerminalUI implements KlondikeUI {
 
         public abstract void doAction();
 
+        public boolean canAcceptCard() {
+            return false;
+        }
+
         public void writeToTerminal() {
             this.writeToTerminal(payload.toString());
         }
@@ -191,8 +195,13 @@ public class TerminalUI implements KlondikeUI {
         }
 
         @Override
+        public boolean canAcceptCard() {
+            return true;
+        }
+
+        @Override
         public void doAction() {
-            System.out.println("foundation: " + payload.suit.toString());
+            System.err.println("foundation: " + payload.toString());
         }
     }
 
@@ -211,7 +220,9 @@ public class TerminalUI implements KlondikeUI {
             }
         }
 
-        public void doAction() {}
+        public void doAction() {
+            System.err.println("tableau: " + payload.toString());
+        }
     }
 
     public static void main(String[] args) {
