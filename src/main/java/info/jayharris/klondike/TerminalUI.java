@@ -145,6 +145,10 @@ public class TerminalUI implements KlondikeUI {
             case 'w':
             case 'W':
                 break;
+            case 'q':
+            case 'Q':
+                pointingTo.drawPointer();
+                break;
             default:
                 break;
         }
@@ -199,7 +203,9 @@ public class TerminalUI implements KlondikeUI {
             term.mvputs(row, column, str);
         }
 
-        
+        public void drawPointer() {
+            term.mvputs(row, column - 3, "-> ");
+        }
     }
 
     public class FoundationUIComponent extends TerminalUIComponent<Klondike.Foundation> {
