@@ -87,7 +87,7 @@ public class TerminalUI implements KlondikeUI {
         components = new ArrayList<TerminalUIComponent<?>>() {{
             int col;
 
-            this.add(new TerminalUIComponent<Deck>(klondike.getDeck(), LEFT_COL, START_ROW) {
+            this.add(new TerminalUIComponent<Deck>(klondike.getDeck(), START_ROW, LEFT_COL) {
                 @Override
                 public void writeToTerminal() {
                     super.writeToTerminal("[" +
@@ -100,7 +100,7 @@ public class TerminalUI implements KlondikeUI {
                 }
             });
 
-            this.add(new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), WASTE_START_COL, START_ROW) {
+            this.add(new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), START_ROW, WASTE_START_COL) {
                 @Override
                 public void doAction() {
                     System.err.println("waste");
@@ -196,13 +196,15 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void writeToTerminal(String str) {
-            term.mvputs(column, row, str);
+            term.mvputs(row, column, str);
         }
+
+        
     }
 
     public class FoundationUIComponent extends TerminalUIComponent<Klondike.Foundation> {
         public FoundationUIComponent(Klondike.Foundation payload, int column) {
-            super(payload, column, START_ROW);
+            super(payload, START_ROW, column);
         }
 
         @Override
