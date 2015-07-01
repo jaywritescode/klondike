@@ -58,6 +58,7 @@ public class TerminalUI implements KlondikeUI {
             for (TerminalUIComponent<?> component : components) {
                 component.writeToTerminal();
             }
+            pointingTo.drawPointer(false);
             key = term.getch();
             // getch automatically does a refresh
             onKeyPress(key);
@@ -133,21 +134,21 @@ public class TerminalUI implements KlondikeUI {
                 break;
             case 'a':
             case 'A':
+                pointingTo.drawPointer(true);
                 movePointerLeft();
+                pointingTo.drawPointer(false);
                 break;
             case 'd':
             case 'D':
+                pointingTo.drawPointer(true);
                 movePointerRight();
+                pointingTo.drawPointer(false);
                 break;
             case 's':
             case 'S':
                 break;
             case 'w':
             case 'W':
-                break;
-            case 'q':
-            case 'Q':
-                pointingTo.drawPointer();
                 break;
             default:
                 break;
@@ -203,8 +204,13 @@ public class TerminalUI implements KlondikeUI {
             term.mvputs(row, column, str);
         }
 
-        public void drawPointer() {
-            term.mvputs(row, column - 3, "-> ");
+        /**
+         * Draw or undraw the pointer indicating the current element.
+         *
+         * @param remove if {@code true} then remove the pointer, otherwise draw it
+         */
+        public void drawPointer(boolean remove) {
+            term.mvputs(row, column - 3, remove ? "   " : "-> ");
         }
     }
 
@@ -241,6 +247,10 @@ public class TerminalUI implements KlondikeUI {
 
         public void doAction() {
             System.err.println("tableau: " + payload.toString());
+        }
+
+        public void drawPointer(boolean remove) {
+            term.mvputs(Math.max(row + payload.size() - 1, 0), column - 3, remove ? "   " : "-> ");
         }
     }
 
