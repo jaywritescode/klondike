@@ -134,25 +134,28 @@ public class TerminalUI implements KlondikeUI {
                 break;
             case 'a':
             case 'A':
-                pointingTo.drawPointer(true);
-                movePointerLeft();
-                pointingTo.drawPointer(false);
+                movePointer(true);
                 break;
             case 'd':
             case 'D':
-                pointingTo.drawPointer(true);
-                movePointerRight();
-                pointingTo.drawPointer(false);
-                break;
-            case 's':
-            case 'S':
-                break;
-            case 'w':
-            case 'W':
+                movePointer(false);
                 break;
             default:
                 break;
         }
+        pointingTo.receiveKeyPress(codepoint);
+    }
+
+    private void movePointer(boolean left) {
+        pointingTo.drawPointer(true);
+        if (left) {
+            movePointerLeft();
+        }
+        else {
+            movePointerRight();
+        }
+        pointingTo.receiveFocus();
+        pointingTo.drawPointer(false);
     }
 
     private void movePointerRight() {
@@ -192,9 +195,9 @@ public class TerminalUI implements KlondikeUI {
 
         public abstract void doAction();
 
-        public boolean canAcceptCard() {
-            return false;
-        }
+        public void receiveFocus() {};
+
+        public void receiveKeyPress(int codepoint) {};
 
         public void writeToTerminal() {
             this.writeToTerminal(payload.toString());
@@ -220,17 +223,14 @@ public class TerminalUI implements KlondikeUI {
         }
 
         @Override
-        public boolean canAcceptCard() {
-            return true;
-        }
-
-        @Override
         public void doAction() {
             System.err.println("foundation: " + payload.toString());
         }
     }
 
     public class TableauUIComponent extends TerminalUIComponent<Klondike.Tableau> {
+        int pointerIndex = 1;       // pointerIndex = 1 means the top-most card in the tableau
+
         public TableauUIComponent(Klondike.Tableau payload, int column) {
             super(payload, TABLEAU_ROW, column);
         }
@@ -249,8 +249,43 @@ public class TerminalUI implements KlondikeUI {
             System.err.println("tableau: " + payload.toString());
         }
 
+        public void receiveFocus() {
+            pointerIndex = 1;
+        }
+
+        public void receiveKeyPress(int codepoint) {
+            switch (codepoint) {
+                case 'w':
+                case 'W':
+                    movePointerUp();
+                    break;
+                case 's':
+                case 'S':
+                    movePointerDown();
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        public void movePointerUp() {
+            if (pointerIndex < payload.countFaceup()) {
+                drawPointer(true);
+                ++pointerIndex;
+                drawPointer(false);
+            }
+        }
+
+        public void movePointerDown() {
+            if (pointerIndex > 0) {
+                drawPointer(true);
+                --pointerIndex;
+                drawPointer(false);
+            }
+        }
+
         public void drawPointer(boolean remove) {
-            term.mvputs(Math.max(row + payload.size() - 1, 0), column - 3, remove ? "   " : "-> ");
+            term.mvputs(Math.max(row + payload.size() - pointerIndex, 0), column - 3, remove ? "   " : "-> ");
         }
     }
 

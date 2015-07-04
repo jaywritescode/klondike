@@ -223,7 +223,7 @@ public class Klondike {
             }
         }
 
-        private int countFaceup() {
+        public int countFaceup() {
             int count = 0;
             for (Iterator<Card> iter = descendingIterator(); iter.hasNext(); count++) {
                 if (iter.next().isFacedown()) {
