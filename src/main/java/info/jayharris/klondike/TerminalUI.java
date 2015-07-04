@@ -1,5 +1,6 @@
 package info.jayharris.klondike;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.googlecode.blacken.colors.ColorNames;
 import com.googlecode.blacken.colors.ColorPalette;
@@ -8,7 +9,6 @@ import com.googlecode.blacken.terminal.BlackenKeys;
 import com.googlecode.blacken.terminal.CursesLikeAPI;
 import com.googlecode.blacken.terminal.TerminalInterface;
 import info.jayharris.cardgames.Deck;
-import info.jayharris.cardgames.Suit;
 import org.apache.commons.collections4.iterators.LoopingListIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -88,6 +88,9 @@ public class TerminalUI implements KlondikeUI {
         components = new ArrayList<TerminalUIComponent<?>>() {{
             int col;
 
+            /******************************************************************
+             * Deck UI component
+             ******************************************************************/
             this.add(new TerminalUIComponent<Deck>(klondike.getDeck(), START_ROW, LEFT_COL) {
                 @Override
                 public void writeToTerminal() {
@@ -101,31 +104,71 @@ public class TerminalUI implements KlondikeUI {
                 }
             });
 
+            /******************************************************************
+             * Waste UI component
+             ******************************************************************/
             this.add(new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), START_ROW, WASTE_START_COL) {
                 @Override
                 public void doAction() {
                     // pick up the next card in the waste
                     if (movingFrom == null && !payload.isEmpty()) {
                         movingFrom = this;
+                        System.err.println("picking up card: " + payload.peekLast().toString());
                     }
                     // return the card to the waste (assuming it came from the waste)
                     else if (movingFrom == this) {
                         movingFrom = null;
+                        System.err.println("dropping card");
                     }
+                }
+
+                @Override
+                public void writeToTerminal() {
+                    writeToTerminal(Strings.padEnd(payload.toString(), WASTE_MAX_WIDTH, ' '));
                 }
             });
 
+            /******************************************************************
+             * Tableau UI components
+             ******************************************************************/
             col = LEFT_COL;
             for (int i = 0; i < 7; ++i) {
                 this.add(new TableauUIComponent(klondike.getTableau(i), col));
                 col += "XX".length() + SPACE_BETWEEN;
             }
 
+            /******************************************************************
+             * Foundation UI component
+             ******************************************************************/
             col = FOUNDATION_START_COL;
-            for (Suit suit : EnumSet.allOf(Suit.class)) {
-                this.add(new FoundationUIComponent(klondike.getFoundation(suit), col));
-                col += "XX".length() + SPACE_BETWEEN;
-            }
+            this.add(new TerminalUIComponent<Collection<Klondike.Foundation>>(
+                    klondike.getFoundations(), START_ROW, col) {
+
+                Joiner joiner = Joiner.on(Strings.repeat(" ", SPACE_BETWEEN));
+
+                @Override
+                public void writeToTerminal() {
+                    writeToTerminal(joiner.join(payload));
+                }
+
+                @Override
+                public void doAction() {
+                    boolean legal = false;
+                    if (movingFrom != null) {
+                        if (movingFrom.getClass() == TableauUIComponent.class) {
+                            legal = klondike.moveFromTableauToFoundation((Klondike.Tableau) movingFrom.payload);
+                        }
+                        else {
+                            legal = klondike.moveFromWasteToFoundation();
+                        }
+                    }
+                    if (legal) {
+                        movingFrom.writeToTerminal();
+                        this.writeToTerminal();
+                        movingFrom = null;
+                    }
+                }
+            });
         }};
         componentOrder = new LoopingListIterator(components);
         pointingTo = componentOrder.next();
@@ -202,9 +245,9 @@ public class TerminalUI implements KlondikeUI {
 
         public abstract void doAction();
 
-        public void receiveFocus() {};
+        public void receiveFocus() {}
 
-        public void receiveKeyPress(int codepoint) {};
+        public void receiveKeyPress(int codepoint) {}
 
         public void writeToTerminal() {
             this.writeToTerminal(payload.toString());
@@ -221,17 +264,6 @@ public class TerminalUI implements KlondikeUI {
          */
         public void drawPointer(boolean remove) {
             term.mvputs(row, column - 3, remove ? "   " : "-> ");
-        }
-    }
-
-    public class FoundationUIComponent extends TerminalUIComponent<Klondike.Foundation> {
-        public FoundationUIComponent(Klondike.Foundation payload, int column) {
-            super(payload, START_ROW, column);
-        }
-
-        @Override
-        public void doAction() {
-            System.err.println("foundation: " + payload.toString());
         }
     }
 

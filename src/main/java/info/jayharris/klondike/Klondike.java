@@ -211,6 +211,10 @@ public class Klondike {
         return waste;
     }
 
+    protected Collection<Foundation> getFoundations() {
+        return foundations.values();
+    }
+
     class Tableau extends LinkedList<Card> {
         public boolean accepts(Card card) {
             if (isEmpty()) {
