@@ -97,7 +97,7 @@ public class TerminalUI implements KlondikeUI {
 
                 @Override
                 public void doAction() {
-                    System.err.println("deck");
+                    klondike.deal();
                 }
             });
 
