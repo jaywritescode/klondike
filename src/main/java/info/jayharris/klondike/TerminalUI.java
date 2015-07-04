@@ -23,7 +23,7 @@ public class TerminalUI implements KlondikeUI {
     private ColorPalette palette;
     private CursesLikeAPI term = null;
 
-    private TerminalUIComponent<?> pointingTo;
+    private TerminalUIComponent<?> pointingTo, movingFrom = null;
     private List<TerminalUIComponent<?>> components;
     private LoopingListIterator<TerminalUIComponent<?>> componentOrder;
     private boolean lastDirectionRight = true;      // direction of last move --
@@ -104,7 +104,14 @@ public class TerminalUI implements KlondikeUI {
             this.add(new TerminalUIComponent<Klondike.Waste>(klondike.getWaste(), START_ROW, WASTE_START_COL) {
                 @Override
                 public void doAction() {
-                    System.err.println("waste");
+                    // pick up the next card in the waste
+                    if (movingFrom == null && !payload.isEmpty()) {
+                        movingFrom = this;
+                    }
+                    // return the card to the waste (assuming it came from the waste)
+                    else if (movingFrom == this) {
+                        movingFrom = null;
+                    }
                 }
             });
 
@@ -134,11 +141,11 @@ public class TerminalUI implements KlondikeUI {
                 break;
             case 'a':
             case 'A':
-                movePointer(true);
+                movePointerAndRedraw(true);
                 break;
             case 'd':
             case 'D':
-                movePointer(false);
+                movePointerAndRedraw(false);
                 break;
             default:
                 break;
@@ -146,7 +153,7 @@ public class TerminalUI implements KlondikeUI {
         pointingTo.receiveKeyPress(codepoint);
     }
 
-    private void movePointer(boolean left) {
+    private void movePointerAndRedraw(boolean left) {
         pointingTo.drawPointer(true);
         if (left) {
             movePointerLeft();
