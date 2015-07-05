@@ -269,19 +269,28 @@ public class TerminalUI implements KlondikeUI {
 
     public class TableauUIComponent extends TerminalUIComponent<Klondike.Tableau> {
         int pointerIndex = 1;       // pointerIndex = 1 means the top-most card in the tableau
+        int lengthToClean;
+
+        static final String blank = "  ";
 
         public TableauUIComponent(Klondike.Tableau payload, int column) {
             super(payload, TABLEAU_ROW, column);
+            lengthToClean = payload.size();
         }
 
         public void writeToTerminal() {
-            if (payload.isEmpty()) {
-                term.mvputs(column, row, "  ");
-            } else {
-                for (int i = 0; i < payload.size(); ++i) {
-                    term.mvputs(row + i, column, payload.get(i).toString());
+            int newLengthToClean = 0;
+            String s;
+
+            for (int i = 0; i < Math.max(payload.size(), lengthToClean); ++i) {
+                s = "  ";
+                if (i < payload.size()) {
+                    s = payload.get(i).toString();
+                    ++newLengthToClean;
                 }
+                term.mvputs(row + i, column, s);
             }
+            lengthToClean = newLengthToClean;
         }
 
         public void doAction() {
