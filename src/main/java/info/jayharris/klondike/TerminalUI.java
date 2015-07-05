@@ -285,11 +285,28 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void doAction() {
-            System.err.println("tableau: " + payload.toString());
+            boolean legal = false;
+            if (movingFrom == null && !payload.isEmpty()) {
+                movingFrom = this;
+            }
+            else if (movingFrom.getClass() == TableauUIComponent.class) {
+                TableauUIComponent _movingFrom = (TableauUIComponent) movingFrom;
+                legal = klondike.moveFromTableauToTableau(_movingFrom.payload, this.payload, _movingFrom.pointerIndex);
+            }
+            else {
+                legal = klondike.moveFromWasteToTableau(this.payload);
+            }
+            if (legal) {
+                movingFrom.writeToTerminal();
+                writeToTerminal();
+                movingFrom = null;
+            }
         }
 
         public void receiveFocus() {
-            pointerIndex = 1;
+            if (movingFrom != this) {
+                pointerIndex = 1;
+            }
         }
 
         public void receiveKeyPress(int codepoint) {
