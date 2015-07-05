@@ -146,7 +146,14 @@ public class Klondike {
         Preconditions.checkArgument(!tableau.isEmpty());
         Card card = tableau.peekLast();
         Foundation foundation = foundations.get(card.getSuit());
-        return foundation.accepts(card) && foundation.add(tableau.removeLast());
+
+        if (foundation.accepts(card) && foundation.add(tableau.removeLast())) {
+            if (!tableau.isEmpty() && tableau.peekLast().isFacedown()) {
+                tableau.peekLast().flip();
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
