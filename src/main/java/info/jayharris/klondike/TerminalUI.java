@@ -350,7 +350,7 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void drawPointer(boolean remove) {
-            term.mvputs(Math.max(row + payload.size() - pointerIndex, 0), column - 3, remove ? "   " : "-> ");
+            term.mvputs(row + Math.max(payload.size() - pointerIndex, 0), column - 3, remove ? "   " : "-> ");
         }
     }
 
