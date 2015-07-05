@@ -301,13 +301,21 @@ public class TerminalUI implements KlondikeUI {
             else if (movingFrom.getClass() == TableauUIComponent.class) {
                 TableauUIComponent _movingFrom = (TableauUIComponent) movingFrom;
                 legal = klondike.moveFromTableauToTableau(_movingFrom.payload, this.payload, _movingFrom.pointerIndex);
+
+                // since we added more cards to the end of this tableau, we need to update its pointerIndex
+                // to reflect its new length
+                this.pointerIndex += _movingFrom.pointerIndex;
             }
             else {
                 legal = klondike.moveFromWasteToTableau(this.payload);
+                this.pointerIndex += 1;
             }
             if (legal) {
                 movingFrom.writeToTerminal();
                 writeToTerminal();
+                drawPointer(true);
+                this.pointerIndex = 1;
+                drawPointer(false);
                 movingFrom = null;
             }
         }
