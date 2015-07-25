@@ -8,6 +8,7 @@ import com.googlecode.blacken.swing.SwingTerminal;
 import com.googlecode.blacken.terminal.BlackenKeys;
 import com.googlecode.blacken.terminal.CursesLikeAPI;
 import com.googlecode.blacken.terminal.TerminalInterface;
+import info.jayharris.cardgames.Card;
 import info.jayharris.cardgames.Deck;
 import org.apache.commons.collections4.iterators.LoopingListIterator;
 import org.slf4j.Logger;
@@ -34,8 +35,9 @@ public class TerminalUI implements KlondikeUI {
             LEFT_COL = 5,
             SPACE_BETWEEN = 3,
             TABLEAU_ROW = 2,
+            WASTE_CARDS_SHOWN = 6,
             WASTE_START_COL = LEFT_COL + "[24 cards]".length() + SPACE_BETWEEN,
-            WASTE_MAX_WIDTH = "[... XX XX XX XX XX XX]".length(),
+            WASTE_MAX_WIDTH = "... XX XX XX XX XX XX".length(),
             FOUNDATION_START_COL = WASTE_START_COL + WASTE_MAX_WIDTH + SPACE_BETWEEN;
 
     final Logger logger = LoggerFactory.getLogger(TerminalUI.class);
@@ -52,7 +54,7 @@ public class TerminalUI implements KlondikeUI {
         if (palette.containsKey("Black")) {
             term.setCurForeground("Black");
         }
-        this.term.clear();
+        term.clear();
 
         while (!this.quit) {
             for (TerminalUIComponent<?> component : components) {
@@ -124,7 +126,32 @@ public class TerminalUI implements KlondikeUI {
 
                 @Override
                 public void writeToTerminal() {
-                    writeToTerminal(Strings.padEnd(payload.toString(), WASTE_MAX_WIDTH, ' '));
+                    int sz = payload.size();
+
+                    int index = Math.max(0, sz - WASTE_CARDS_SHOWN), strlen = 0;
+                    if (sz > WASTE_CARDS_SHOWN) {
+                        writeToTerminal("... ");
+                        strlen += "... ".length();
+                    }
+                    while (index < sz) {
+                        if (index == sz - 1) {
+                            if (movingFrom == this) {
+                                setCurBackground("Yellow");
+                            }
+                            writeToTerminal(0, strlen, payload.get(index).toString());
+                            strlen += 2;
+                        }
+                        else {
+                            writeToTerminal(0, strlen, payload.get(index).toString() + " ");
+                            strlen += 3;
+                        }
+                        setCurBackground("White");
+                        ++index;
+                    }
+                    while (strlen < WASTE_MAX_WIDTH) {
+                        writeToTerminal(0, strlen, " ");
+                        ++strlen;
+                    }
                 }
             });
 
@@ -196,6 +223,14 @@ public class TerminalUI implements KlondikeUI {
         pointingTo.receiveKeyPress(codepoint);
     }
 
+    public void update(Observable observable, Object object) {
+        
+    }
+
+    private void setCurBackground(String c) {
+        term.setCurBackground(c);
+    }
+
     private void movePointerAndRedraw(boolean left) {
         pointingTo.drawPointer(true);
         if (left) {
@@ -235,12 +270,12 @@ public class TerminalUI implements KlondikeUI {
 
     public abstract class TerminalUIComponent<T> {
         T payload;
-        int row, column;
+        int startRow, startColumn;
 
-        public TerminalUIComponent(T payload, int row, int column) {
+        public TerminalUIComponent(T payload, int startRow, int startColumn) {
             this.payload = payload;
-            this.row = row;
-            this.column = column;
+            this.startRow = startRow;
+            this.startColumn = startColumn;
         }
 
         public abstract void doAction();
@@ -254,7 +289,11 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void writeToTerminal(String str) {
-            term.mvputs(row, column, str);
+            term.mvputs(startRow, startColumn, str);
+        }
+
+        public void writeToTerminal(int rowOffset, int columnOffset, String str) {
+            term.mvputs(startRow + rowOffset, startColumn + columnOffset, str);
         }
 
         /**
@@ -263,7 +302,7 @@ public class TerminalUI implements KlondikeUI {
          * @param remove if {@code true} then remove the pointer, otherwise draw it
          */
         public void drawPointer(boolean remove) {
-            term.mvputs(row, column - 3, remove ? "   " : "-> ");
+            term.mvputs(startRow, startColumn - 3, remove ? "   " : "-> ");
         }
     }
 
@@ -288,7 +327,7 @@ public class TerminalUI implements KlondikeUI {
                     s = payload.get(i).toString();
                     ++newLengthToClean;
                 }
-                term.mvputs(row + i, column, s);
+                term.mvputs(startRow + i, startColumn, s);
             }
             lengthToClean = newLengthToClean;
         }
@@ -358,7 +397,7 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void drawPointer(boolean remove) {
-            term.mvputs(row + Math.max(payload.size() - pointerIndex, 0), column - 3, remove ? "   " : "-> ");
+            term.mvputs(startRow + Math.max(payload.size() - pointerIndex, 0), startColumn - 3, remove ? "   " : "-> ");
         }
     }
 
