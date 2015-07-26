@@ -305,29 +305,29 @@ public class TerminalUI implements KlondikeUI {
     }
 
     public class TableauUIComponent extends TerminalUIComponent<Klondike.Tableau> {
-        int pointerIndex = 1;       // pointerIndex = 1 means the top-most card in the tableau
+        int pointerIndex;
         int lengthToClean;
 
         static final String blank = "  ";
 
         public TableauUIComponent(Klondike.Tableau payload, int column) {
             super(payload, TABLEAU_ROW, column);
+            pointerIndex = payload.size() - 1;
             lengthToClean = payload.size();
         }
 
         public void writeToTerminal() {
-            int newLengthToClean = 0;
-            String s;
-
             for (int i = 0; i < Math.max(payload.size(), lengthToClean); ++i) {
-                s = "  ";
-                if (i < payload.size()) {
-                    s = payload.get(i).toString();
-                    ++newLengthToClean;
+                if (movingFrom == this && pointerIndex == i) {
+                    setCurBackground("Yellow");
                 }
-                term.mvputs(startRow + i, startColumn, s);
+                if (i == payload.size()) {
+                    setCurBackground("White");
+                }
+                term.mvputs(startRow + i, startColumn, i < payload.size() ? payload.get(i).toString() : "  ");
             }
-            lengthToClean = newLengthToClean;
+            setCurBackground("White");
+            lengthToClean = payload.size();
         }
 
         public void doAction() {
@@ -337,21 +337,17 @@ public class TerminalUI implements KlondikeUI {
             }
             else if (movingFrom.getClass() == TableauUIComponent.class) {
                 TableauUIComponent _movingFrom = (TableauUIComponent) movingFrom;
-                legal = klondike.moveFromTableauToTableau(_movingFrom.payload, this.payload, _movingFrom.pointerIndex);
-
-                // since we added more cards to the end of this tableau, we need to update its pointerIndex
-                // to reflect its new length
-                this.pointerIndex += _movingFrom.pointerIndex;
+                int numCards = _movingFrom.payload.size() - _movingFrom.pointerIndex;
+                legal = klondike.moveFromTableauToTableau(_movingFrom.payload, this.payload, numCards);
             }
             else {
                 legal = klondike.moveFromWasteToTableau(this.payload);
-                this.pointerIndex += 1;
             }
             if (legal) {
                 movingFrom.writeToTerminal();
                 writeToTerminal();
                 drawPointer(true);
-                this.pointerIndex = 1;
+                this.pointerIndex = payload.size() - 1;
                 drawPointer(false);
                 movingFrom = null;
             }
@@ -359,7 +355,7 @@ public class TerminalUI implements KlondikeUI {
 
         public void receiveFocus() {
             if (movingFrom != this) {
-                pointerIndex = 1;
+                pointerIndex = payload.size() - 1;
             }
         }
 
@@ -379,23 +375,25 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void movePointerUp() {
+            // TODO: fix me
             if (pointerIndex < payload.countFaceup()) {
-                drawPointer(true);
-                ++pointerIndex;
-                drawPointer(false);
-            }
-        }
-
-        public void movePointerDown() {
-            if (pointerIndex > 0) {
                 drawPointer(true);
                 --pointerIndex;
                 drawPointer(false);
             }
         }
 
+        public void movePointerDown() {
+            // TODO: fix me
+            if (pointerIndex > 0) {
+                drawPointer(true);
+                ++pointerIndex;
+                drawPointer(false);
+            }
+        }
+
         public void drawPointer(boolean remove) {
-            term.mvputs(startRow + Math.max(payload.size() - pointerIndex, 0), startColumn - 3, remove ? "   " : "-> ");
+            term.mvputs(startRow + pointerIndex, startColumn - 3, remove ? "   " : "-> ");
         }
     }
 
