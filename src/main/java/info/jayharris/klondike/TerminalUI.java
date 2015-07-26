@@ -8,7 +8,6 @@ import com.googlecode.blacken.swing.SwingTerminal;
 import com.googlecode.blacken.terminal.BlackenKeys;
 import com.googlecode.blacken.terminal.CursesLikeAPI;
 import com.googlecode.blacken.terminal.TerminalInterface;
-import info.jayharris.cardgames.Card;
 import info.jayharris.cardgames.Deck;
 import org.apache.commons.collections4.iterators.LoopingListIterator;
 import org.slf4j.Logger;
@@ -375,8 +374,7 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void movePointerUp() {
-            // TODO: fix me
-            if (pointerIndex < payload.countFaceup()) {
+            if (pointerIndex > payload.size() - payload.countFaceup()) {
                 drawPointer(true);
                 --pointerIndex;
                 drawPointer(false);
@@ -384,8 +382,7 @@ public class TerminalUI implements KlondikeUI {
         }
 
         public void movePointerDown() {
-            // TODO: fix me
-            if (pointerIndex > 0) {
+            if (pointerIndex < payload.size() - 1) {
                 drawPointer(true);
                 ++pointerIndex;
                 drawPointer(false);
