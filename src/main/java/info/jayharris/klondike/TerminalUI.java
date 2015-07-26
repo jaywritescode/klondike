@@ -115,12 +115,10 @@ public class TerminalUI implements KlondikeUI {
                     // pick up the next card in the waste
                     if (movingFrom == null && !payload.isEmpty()) {
                         movingFrom = this;
-                        System.err.println("picking up card: " + payload.peekLast().toString());
                     }
                     // return the card to whence it came
                     else {
                         movingFrom = null;
-                        System.err.println("dropping card");
                     }
                 }
 
