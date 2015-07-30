@@ -32,7 +32,7 @@ public class TerminalUI implements KlondikeUI {
 
     public final int START_ROW = 0,
             LEFT_COL = 5,
-            SPACE_BETWEEN = 3,
+            SPACE_BETWEEN = 5,
             TABLEAU_ROW = 2,
             WASTE_CARDS_SHOWN = 6,
             WASTE_START_COL = LEFT_COL + "[24 cards]".length() + SPACE_BETWEEN,
