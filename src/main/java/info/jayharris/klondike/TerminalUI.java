@@ -202,8 +202,7 @@ public class TerminalUI implements KlondikeUI {
 
     private void onKeyPress(int codepoint) {
         switch (codepoint) {
-            case 'z':
-            case 'Z':
+            case ' ':
                 pointingTo.doAction();
                 break;
             case 'a':
