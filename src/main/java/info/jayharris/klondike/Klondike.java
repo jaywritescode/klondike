@@ -2,7 +2,10 @@ package info.jayharris.klondike;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import info.jayharris.cardgames.*;
@@ -52,30 +55,12 @@ public class Klondike {
         }
     }
 
-//    public boolean play() {
-//        init();
-//
-//        passes = 0;
-//        hasNoNextRound = true;
-//        inProgress = true;
-//
-//        while (inProgress) {
-//            if (app.getAction().doAction(this)) {
-//                inProgress = !isGameOver();
-//            }
-//        }
-//
-//        // TODO: implement
-//        return false;
-//    }
-
     public boolean isDeckEmpty() {
         return deck.isEmpty();
     }
 
     public boolean isGameOver() {
-        // TODO: implement
-        return false;
+        return isDeckEmpty() && waste.isEmpty() && Iterables.all(tableaus, pTableauHasNoFacedown);
     }
 
     public boolean deal() {
@@ -222,7 +207,25 @@ public class Klondike {
         return foundations.values();
     }
 
+    public void registerObserver(Observer observer) {
+        frontend.addObserver(observer);
+    }
+
+    static Predicate pTableauHasNoFacedown = new Predicate<Tableau>() {
+        @Override
+        public boolean apply(Tableau input) {
+            return Iterables.all(input, input.pIsFaceDown);
+        }
+    };
+
     class Tableau extends LinkedList<Card> {
+        Predicate pIsFaceDown = new Predicate<Card>() {
+            @Override
+            public boolean apply(Card input) {
+                return input.isFacedown();
+            }
+        };
+
         public boolean accepts(Card card) {
             if (isEmpty()) {
                 return card.getRank() == Rank.KING;
@@ -234,6 +237,11 @@ public class Klondike {
             }
         }
 
+        /**
+         * Count the number of face-up cards in the tableau.
+         *
+         * @return the number of face-up cards in the tableau.
+         */
         public int countFaceup() {
             int count = 0;
             for (Iterator<Card> iter = descendingIterator(); iter.hasNext(); count++) {
@@ -242,6 +250,10 @@ public class Klondike {
                 }
             }
             return count;
+        }
+
+        public boolean hasNoFacedown() {
+            return Iterables.all(this, Predicates.not(pIsFaceDown));
         }
 
         @Override
