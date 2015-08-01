@@ -353,7 +353,7 @@ public class TerminalUI implements KlondikeUI {
 
         public void receiveFocus() {
             if (movingFrom != this) {
-                pointerIndex = payload.size() - 1;
+                pointerIndex = Math.max(payload.size() - 1, 0);
             }
         }
 
