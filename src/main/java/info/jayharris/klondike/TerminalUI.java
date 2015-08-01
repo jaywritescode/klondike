@@ -5,9 +5,7 @@ import com.google.common.base.Strings;
 import com.googlecode.blacken.colors.ColorNames;
 import com.googlecode.blacken.colors.ColorPalette;
 import com.googlecode.blacken.swing.SwingTerminal;
-import com.googlecode.blacken.terminal.BlackenKeys;
-import com.googlecode.blacken.terminal.CursesLikeAPI;
-import com.googlecode.blacken.terminal.TerminalInterface;
+import com.googlecode.blacken.terminal.*;
 import info.jayharris.cardgames.Deck;
 import org.apache.commons.collections4.iterators.LoopingListIterator;
 import org.slf4j.Logger;
@@ -330,7 +328,10 @@ public class TerminalUI implements KlondikeUI {
 
         public void doAction() {
             boolean legal = false;
-            if (movingFrom == null && !payload.isEmpty()) {
+            if (movingFrom == this) {
+                movingFrom = null;
+            }
+            else if (movingFrom == null && !payload.isEmpty()) {
                 movingFrom = this;
             }
             else if (movingFrom.getClass() == TableauUIComponent.class) {
