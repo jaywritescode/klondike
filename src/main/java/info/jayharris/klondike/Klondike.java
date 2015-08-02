@@ -43,11 +43,17 @@ public class Klondike {
 
         waste = new Waste();
         this.rules = rules;
-        inProgress = false;
+
+        passes = 0;
+
+        frontend = new Observable();
     }
 
     public void init() {
         deck.shuffle();
+
+        System.err.println(deck);
+
         for (int i = 0; i < tableaus.size(); ++i) {
             for (int j = i; j < tableaus.size(); ++j) {
                 tableaus.get(j).add(j == i ? deck.dealFaceUp() : deck.dealFaceDown());
@@ -60,10 +66,21 @@ public class Klondike {
     }
 
     public boolean isGameOver() {
-        return isDeckEmpty() && waste.isEmpty() && Iterables.all(tableaus, pTableauHasNoFacedown);
+        if (Iterables.all(foundations.values(), pFoundationIsComplete)) {
+            return true;
+        }
+        if (passes >= rules.getPasses()) {
+            return true;
+        }
+
+
+
+        return false;
     }
 
     public boolean deal() {
+        System.err.println("deal();");
+
         if (isDeckEmpty()) {
             return restartDeck();
         }
@@ -184,6 +201,7 @@ public class Klondike {
             }
         }));
         waste.clear();
+        ++passes;
         return true;
     }
 
@@ -218,6 +236,13 @@ public class Klondike {
         }
     };
 
+    static Predicate pFoundationIsComplete = new Predicate<Foundation>() {
+        @Override
+        public boolean apply(Foundation input) {
+            return input.isComplete();
+        }
+    };
+
     class Tableau extends LinkedList<Card> {
         Predicate pIsFaceDown = new Predicate<Card>() {
             @Override
@@ -226,6 +251,12 @@ public class Klondike {
             }
         };
 
+        /**
+         * Is this a legal move?
+         *
+         * @param card the card that we're trying to add to the top of the tableau
+         * @return {@code true} iff this is a legal move
+         */
         public boolean accepts(Card card) {
             if (isEmpty()) {
                 return card.getRank() == Rank.KING;
@@ -252,6 +283,11 @@ public class Klondike {
             return count;
         }
 
+        /**
+         * Are there any face-down cards in the tableau?
+         *
+         * @return {@code true} iff this tableau is empty or all cards in the tableau are face-up
+         */
         public boolean hasNoFacedown() {
             return Iterables.all(this, Predicates.not(pIsFaceDown));
         }
@@ -286,6 +322,10 @@ public class Klondike {
                 return card.getRank() == (isEmpty() ? Rank.ACE : peekLast().getRank().higher());
             }
             return false;
+        }
+
+        public boolean isComplete() {
+            return size() == 13;
         }
 
         @Override
@@ -346,6 +386,10 @@ public class Klondike {
         Rules() {
             this(Deal.DEAL_THREE, Passes.INFINITY);
         }
+
+        Rules(Deal deal) { this(deal, Passes.INFINITY); }
+
+        Rules(Passes passes) { this(Deal.DEAL_THREE, passes); }
 
         Rules(Deal deal, Passes passes) {
             this.deal = deal;

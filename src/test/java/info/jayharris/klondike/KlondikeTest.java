@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -434,6 +435,19 @@ public class KlondikeTest {
         assertFalse(klondike.moveFromTableauToTableau(tableau1, tableau2, faceup.size() - count));
         assertEquals(original1, tableau1);
         assertEquals(original2, tableau2);
+    }
+
+    @Test
+    public void testGameOver_tooManyRestarts() throws Exception {
+        Field rulesField = Klondike.class.getField("rules");
+        rulesField.setAccessible(true);
+        rulesField.set(klondike, new Klondike.Rules(Klondike.Rules.Passes.SINGLE));
+
+        while (!klondike.getDeck().isEmpty()) {
+            klondike.deal();
+        }
+        klondike.deal();
+        assertTrue(klondike.isGameOver());
     }
 
     /**
