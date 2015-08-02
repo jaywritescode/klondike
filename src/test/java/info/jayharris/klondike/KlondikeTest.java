@@ -15,10 +15,7 @@ import org.slf4j.LoggerFactory;
 
 
 import java.lang.reflect.Field;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
@@ -435,6 +432,20 @@ public class KlondikeTest {
         assertFalse(klondike.moveFromTableauToTableau(tableau1, tableau2, faceup.size() - count));
         assertEquals(original1, tableau1);
         assertEquals(original2, tableau2);
+    }
+
+    @Test
+    public void testGameOver_foundationsAllComplete() {
+        Rank[] ranks = new Rank[] {
+            Rank.ACE, Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX, Rank.SEVEN,
+                Rank.EIGHT, Rank.NINE, Rank.TEN, Rank.JACK, Rank.QUEEN, Rank.KING
+        };
+        for (Suit suit : EnumSet.allOf(Suit.class)) {
+            for (Rank rank : ranks) {
+                klondike.getFoundation(suit).add(new Card(rank, suit, false));
+            }
+        }
+        assertTrue(klondike.isGameOver());
     }
 
     @Test
