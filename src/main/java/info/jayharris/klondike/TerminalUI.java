@@ -1,5 +1,7 @@
 package info.jayharris.klondike;
 
+import com.beust.jcommander.IStringConverter;
+import com.beust.jcommander.Parameter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.googlecode.blacken.colors.ColorNames;
@@ -391,6 +393,29 @@ public class TerminalUI implements KlondikeUI {
 
         public void drawPointer(boolean remove) {
             term.mvputs(startRow + pointerIndex, startColumn - 3, remove ? "   " : "-> ");
+        }
+    }
+
+    class CommandLineParams {
+        @Parameter(names = "--deal-one", description = "Deal one card at a time (instead of three).")
+        private boolean dealOne = false;
+
+        @Parameter(names = "--passes", description = "Maximum number of times through the deck.",
+                converter = PassesConverter.class)
+        private Klondike.Rules.Passes passes = Klondike.Rules.Passes.INFINITY;
+
+        public class PassesConverter implements IStringConverter<Klondike.Rules.Passes> {
+            @Override
+            public Klondike.Rules.Passes convert(String value) {
+                switch(value) {
+                    case "1":
+                        return Klondike.Rules.Passes.SINGLE;
+                    case "3":
+                        return Klondike.Rules.Passes.THREE;
+                    default:
+                        return Klondike.Rules.Passes.INFINITY;
+                }
+            }
         }
     }
 
