@@ -440,6 +440,10 @@ public class KlondikeTest {
             Rank.ACE, Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX, Rank.SEVEN,
                 Rank.EIGHT, Rank.NINE, Rank.TEN, Rank.JACK, Rank.QUEEN, Rank.KING
         };
+
+        while (!klondike.isDeckEmpty()) {
+            klondike.deal();
+        }
         for (Suit suit : EnumSet.allOf(Suit.class)) {
             for (Rank rank : ranks) {
                 klondike.getFoundation(suit).add(new Card(rank, suit, false));

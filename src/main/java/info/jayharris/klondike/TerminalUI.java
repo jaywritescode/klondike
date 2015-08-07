@@ -1,6 +1,7 @@
 package info.jayharris.klondike;
 
 import com.beust.jcommander.IStringConverter;
+import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -15,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class TerminalUI implements KlondikeUI {
+public class TerminalUI implements KlondikeUI, Observer {
 
     private Klondike klondike;
 
@@ -43,6 +44,7 @@ public class TerminalUI implements KlondikeUI {
 
     public TerminalUI(Klondike klondike) {
         this.klondike = klondike;
+        this.klondike.addObserver(this);
     }
 
     protected boolean loop() {
@@ -219,10 +221,6 @@ public class TerminalUI implements KlondikeUI {
         pointingTo.receiveKeyPress(codepoint);
     }
 
-    public void update(Observable observable, Object object) {
-        
-    }
-
     private void setCurBackground(String c) {
         term.setCurBackground(c);
     }
@@ -262,6 +260,13 @@ public class TerminalUI implements KlondikeUI {
     public void quit() {
         this.quit = true;
         term.quit();
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        if (o == klondike && arg instanceof Klondike.GameOver) {
+            System.err.println("game over");
+        }
     }
 
     public abstract class TerminalUIComponent<T> {
@@ -396,7 +401,7 @@ public class TerminalUI implements KlondikeUI {
         }
     }
 
-    class CommandLineParams {
+    static class CommandLineParams {
         @Parameter(names = "--deal-one", description = "Deal one card at a time (instead of three).")
         private boolean dealOne = false;
 
@@ -420,7 +425,13 @@ public class TerminalUI implements KlondikeUI {
     }
 
     public static void main(String[] args) {
-        TerminalUI ui = new TerminalUI(new Klondike());
+        CommandLineParams params = new TerminalUI.CommandLineParams();
+        new JCommander(params, args);
+
+        Klondike.Rules rules = new Klondike.Rules(
+                params.dealOne ? Klondike.Rules.Deal.DEAL_SINGLE : Klondike.Rules.Deal.DEAL_THREE, params.passes);
+
+        TerminalUI ui = new TerminalUI(new Klondike(rules));
         ui.init(null, null);
         ui.loop();
         ui.quit();

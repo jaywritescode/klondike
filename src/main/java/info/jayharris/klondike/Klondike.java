@@ -45,8 +45,6 @@ public class Klondike {
         this.rules = rules;
 
         passes = 0;
-
-        frontend = new Observable();
     }
 
     public void init() {
@@ -66,15 +64,14 @@ public class Klondike {
     }
 
     public boolean isGameOver() {
-        if (Iterables.all(foundations.values(), pFoundationIsComplete)) {
+        if (!isDeckEmpty()) {
+            return false;
+        }
+        if (!didChange || passes >= rules.getPasses() || Iterables.all(foundations.values(), pFoundationIsComplete)) {
+            this.setChanged();
+            this.notifyObservers(new GameOver());
             return true;
         }
-        if (passes >= rules.getPasses()) {
-            return true;
-        }
-
-
-
         return false;
     }
 
@@ -110,15 +107,45 @@ public class Klondike {
     public boolean moveFromWasteToTableau(Tableau tableau) {
         Card card = waste.peekLast();
 
+        System.err.println("moveFromWasteToTableau(tableaus.get(" + whichTableau(tableau) + "));");
+
         if (tableau.isEmpty()) {
-            return card.getRank() == Rank.KING && tableau.add(waste.removeLast());
+            if (card.getRank() == Rank.KING) {
+                didChange = true;
+                tableau.add(waste.removeLast());
+                return true;
+            }
+            else {
+                return false;
+            }
         }
         else {
             Card target = tableau.peekLast();
-            return card.getRank() == target.getRank().lower() &&
-                    card.getColor() == target.getColor().opposite() && tableau.add(waste.removeLast());
+            if (card.getRank() == target.getRank().lower() && card.getColor() == target.getColor().opposite()) {
+                didChange = true;
+                tableau.add(waste.removeLast());
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
+
+    ///////////////////////////////////////
+    // TEMPORARY
+    ///////////////////////////////////////
+    public int whichTableau(Tableau tableau) {
+        for (int i = 0; i < tableaus.size(); ++i) {
+            if (tableaus.get(i) == tableau) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    ///////////////////////////////////////
+    // TEMPORARY
+    ///////////////////////////////////////
 
     /**
      * Move a card from the waste to the appropriate foundation.
@@ -126,15 +153,30 @@ public class Klondike {
      * @return {@code true} if the move is legal, {@code false} otherwise
      */
     public boolean moveFromWasteToFoundation() {
+        System.err.println("moveFromWasteToFoundation();");
+
         Card card = waste.peekLast();
         Foundation foundation = foundations.get(card.getSuit());
 
         if (foundation.isEmpty()) {
-            return card.getRank() == Rank.ACE && foundation.add(waste.removeLast());
+            if (card.getRank() == Rank.ACE) {
+                didChange = true;
+                foundation.add(waste.removeLast());
+                return true;
+            }
+            else {
+                return false;
+            }
         }
         else {
-            return card.getRank().lower() == foundation.peekLast().getRank() &&
-                    foundation.add(waste.removeLast());
+            if (card.getRank().lower() == foundation.peekLast().getRank()) {
+                didChange = true;
+                foundation.add(waste.removeLast());
+                return true;
+            }
+            else {
+                return false;
+            }
         }
     }
 
@@ -146,16 +188,24 @@ public class Klondike {
      */
     public boolean moveFromTableauToFoundation(Tableau tableau) {
         Preconditions.checkArgument(!tableau.isEmpty());
+
+        System.err.println("moveFromTableauToFoundation(tableaus.get(" + whichTableau(tableau) + "));");
+
         Card card = tableau.peekLast();
         Foundation foundation = foundations.get(card.getSuit());
 
-        if (foundation.accepts(card) && foundation.add(tableau.removeLast())) {
+        if (foundation.accepts(card)) {
+            didChange = true;
+            foundation.add(tableau.removeLast());
+
             if (!tableau.isEmpty() && tableau.peekLast().isFacedown()) {
                 tableau.peekLast().flip();
             }
             return true;
         }
-        return false;
+        else {
+            return false;
+        }
     }
 
     /**
@@ -170,6 +220,8 @@ public class Klondike {
         Preconditions.checkArgument(!from.isEmpty());
         Preconditions.checkArgument(num > 0 && num <= from.countFaceup());
 
+        System.err.println(String.format("moveFromTableauToTableaus(tableaus.get(%d), tableaus.get(%d), %d);", whichTableau(from), whichTableau(to), num));
+
         List<Card> moving = from.subList(from.size() - num, from.size());
         if (!to.accepts(moving.get(0))) {
             return false;
@@ -183,6 +235,7 @@ public class Klondike {
             from.peekLast().flip();
         }
 
+        didChange = true;
         return true;
     }
 
@@ -200,8 +253,15 @@ public class Klondike {
                 return input;
             }
         }));
+
         waste.clear();
         ++passes;
+
+        if (isGameOver()) {
+
+        }
+
+        didChange = false;
         return true;
     }
 
@@ -223,10 +283,6 @@ public class Klondike {
 
     protected Collection<Foundation> getFoundations() {
         return foundations.values();
-    }
-
-    public void registerObserver(Observer observer) {
-        frontend.addObserver(observer);
     }
 
     static Predicate pTableauHasNoFacedown = new Predicate<Tableau>() {
