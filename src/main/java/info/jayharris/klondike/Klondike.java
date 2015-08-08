@@ -69,14 +69,14 @@ public class Klondike extends Observable {
         if (!isDeckEmpty()) {
             return false;
         }
-        if (!didChange || passes >= rules.getPasses() || Iterables.all(foundations.values(), pFoundationIsComplete)) {
-            this.setChanged();
-            this.notifyObservers(new GameOver());
-            return true;
-        }
-        return false;
+        return !didChange || passes >= rules.getPasses() || Iterables.all(foundations.values(), pFoundationIsComplete);
     }
 
+    /**
+     * Deal the next card from the deck.
+     *
+     * @return
+     */
     public boolean deal() {
         System.err.println("deal();");
 
