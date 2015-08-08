@@ -4,27 +4,22 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import info.jayharris.cardgames.*;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 import java.lang.reflect.Field;
 import java.util.*;
 
 import static org.junit.Assert.*;
 import static org.junit.Assume.*;
-import static org.mockito.Mockito.mock;
 
 public class KlondikeTest {
 
     Klondike klondike;
-    KlondikeUI ui = mock(KlondikeUI.class);
 
     final Logger logger = LoggerFactory.getLogger(KlondikeTest.class);
 
@@ -36,8 +31,6 @@ public class KlondikeTest {
 
     @Test
     public void testDeal() {
-        logger.debug(klondike.getDeck().toString());
-
         int deckSize = klondike.getDeck().size(),
                 cardsToMove = klondike.rules.getDeal();
         ImmutableList<Card> originalDeck = ImmutableList.copyOf(klondike.getDeck());
@@ -49,23 +42,47 @@ public class KlondikeTest {
         assertTrue(klondike.deal());
         assertEquals(originalDeck.subList(0, cardsToMove * 2), klondike.getWaste());
         assertEquals(originalDeck.subList(cardsToMove * 2, deckSize), klondike.getDeck());
+    }
 
-        // keep dealing until the deck is empty
-        while (!klondike.isDeckEmpty()) {
-            klondike.deal();
-        }
-        assertTrue(klondike.deal());
-        assertEquals(originalDeck, klondike.getDeck());
-        assertTrue(klondike.getWaste().isEmpty());
+    @Test
+    public void testDealFewerThanThreeCards() throws Exception {
+        ImmutableList<Card> originalDeck;
+
+        Field didChangeField = Klondike.class.getDeclaredField("didChange");
+        didChangeField.setAccessible(true);
 
         assumeTrue(klondike.rules.getDeal() > 1);
+
         while (klondike.getDeck().size() >= klondike.rules.getDeal()) {
             klondike.getDeck().removeFirst();
         }
+
         originalDeck = ImmutableList.copyOf(klondike.getDeck());
+        didChangeField.setBoolean(klondike, true);
+
         assertTrue(klondike.deal());
         assertTrue(klondike.getDeck().isEmpty());
         assertEquals(originalDeck, klondike.getWaste());
+    }
+
+    @Test
+    public void testRestartDeckIfEmpty() throws Exception {
+        ImmutableList<Card> originalDeck = ImmutableList.copyOf(klondike.getDeck());
+
+        while (!klondike.isDeckEmpty()) {
+            klondike.deal();
+        }
+
+        Field didChangeField = Klondike.class.getDeclaredField("didChange");
+        didChangeField.setAccessible(true);
+        didChangeField.setBoolean(klondike, true);
+
+        assumeFalse(klondike.isGameOver());
+        assumeTrue(klondike.getWaste().size() == originalDeck.size());
+
+        assertTrue(klondike.deal());
+        assertEquals(originalDeck, klondike.getDeck());
+        assertTrue(klondike.getWaste().isEmpty());
     }
 
     @Test
@@ -103,25 +120,6 @@ public class KlondikeTest {
             fail("Expected IllegalStateException not thrown.");
         }
         catch(IllegalStateException e) {}
-    }
-
-    @Test
-    public void testRestartDeck() {
-        ImmutableList<Card> originalDeck = ImmutableList.copyOf(klondike.getDeck());
-
-        // move all the cards to the waste
-        while (!klondike.getDeck().isEmpty()) {
-            klondike.moveCardToWaste();
-        }
-
-        assertTrue(klondike.restartDeck());
-        assertTrue(klondike.getWaste().isEmpty());
-        assertTrue(Iterables.all(klondike.getDeck(), new Predicate<Card>() {
-            public boolean apply(Card input) {
-                return input.isFacedown();
-            }
-        }));
-        assertEquals(originalDeck, klondike.getDeck());
     }
 
     @Test
@@ -287,7 +285,7 @@ public class KlondikeTest {
         for (int i = 0; i < count; ++i) {
             tableau1.add(d.dealFaceDown());
         }
-        count = (int) (Math.random() * tableau1.size() == 7 ? 4 : 5) + 1;
+        count = (Math.random() * tableau1.size() == 7 ? 4 : 5) + 1;
         for (int i = 0; i < count; ++i) {
             tableau2.add(d.dealFaceDown());
         }
@@ -435,7 +433,7 @@ public class KlondikeTest {
     }
 
     @Test
-    public void testGameOver_foundationsAllComplete() {
+    public void testGameOverIfAllFoundationsComplete() {
         Rank[] ranks = new Rank[] {
             Rank.ACE, Rank.TWO, Rank.THREE, Rank.FOUR, Rank.FIVE, Rank.SIX, Rank.SEVEN,
                 Rank.EIGHT, Rank.NINE, Rank.TEN, Rank.JACK, Rank.QUEEN, Rank.KING
@@ -453,7 +451,7 @@ public class KlondikeTest {
     }
 
     @Test
-    public void testGameOver_tooManyRestarts() throws Exception {
+    public void testGameOverIfTooManyRestarts() throws Exception {
         Field rulesField = Klondike.class.getField("rules");
         rulesField.setAccessible(true);
         rulesField.set(klondike, new Klondike.Rules(Klondike.Rules.Passes.SINGLE));
@@ -463,6 +461,21 @@ public class KlondikeTest {
         }
         klondike.deal();
         assertTrue(klondike.isGameOver());
+    }
+
+    @Test
+    public void testGameOverIfNoCardsMoved() {
+        assumeTrue(klondike.rules.getPasses() > 1);
+
+        while (!klondike.getDeck().isEmpty()) {
+            klondike.deal();
+        }
+        assertTrue(klondike.isGameOver());
+    }
+
+    @Test
+    public void testGameNotOverIfAnyCardMoved() {
+
     }
 
     /**

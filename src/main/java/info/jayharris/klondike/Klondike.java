@@ -12,17 +12,19 @@ import info.jayharris.cardgames.*;
 
 import java.util.*;
 
-public class Klondike {
+public class Klondike extends Observable {
 
     private Deck deck;
     private Waste waste;
     private final ArrayList<Tableau> tableaus;
     private final Map<Suit, Foundation> foundations;
     public final Rules rules;
-    private boolean inProgress;
 
     private int passes;
-    private boolean hasNoNextRound;
+    private boolean didChange;          // keep track of whether we moved a card to a tableau
+                                        // or to a foundation this round
+
+    enum GameOver { GAME_OVER }
 
     public Klondike() {
         this(new Rules());
@@ -242,10 +244,17 @@ public class Klondike {
     /**
      * Take the waste pile and turn it into the deck for the next round.
      *
-     * @return true
+     * @return {@code false} iff the game is over, otherwise {@code true}
      */
     public boolean restartDeck() {
         Preconditions.checkState(deck.isEmpty());
+
+        ++passes;
+        if (isGameOver()) {
+            this.setChanged();
+            this.notifyObservers(GameOver.GAME_OVER);
+            return false;
+        }
 
         deck.addAll(Collections2.transform(waste, new Function<Card, Card>() {
             public Card apply(Card input) {
@@ -255,12 +264,6 @@ public class Klondike {
         }));
 
         waste.clear();
-        ++passes;
-
-        if (isGameOver()) {
-
-        }
-
         didChange = false;
         return true;
     }
