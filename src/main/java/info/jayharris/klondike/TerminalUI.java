@@ -362,8 +362,10 @@ public class TerminalUI implements KlondikeUI, Observer {
             if (movingFrom == this) {
                 movingFrom = null;
             }
-            else if (movingFrom == null && !payload.isEmpty()) {
-                movingFrom = this;
+            else if (movingFrom == null) {
+                if (!payload.isEmpty()) {
+                    movingFrom = this;
+                }
             }
             else if (movingFrom.getClass() == TableauUIComponent.class) {
                 TableauUIComponent _movingFrom = (TableauUIComponent) movingFrom;
