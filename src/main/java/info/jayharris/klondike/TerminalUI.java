@@ -215,6 +215,12 @@ public class TerminalUI implements KlondikeUI, Observer {
             case 'D':
                 movePointerAndRedraw(false);
                 break;
+            case 'r':
+            case 'R':
+                if (klondike.isGameOver()) {
+                    klondike = new Klondike(klondike.rules);
+                }
+                break;
             default:
                 break;
         }
@@ -264,9 +270,27 @@ public class TerminalUI implements KlondikeUI, Observer {
 
     @Override
     public void update(Observable o, Object arg) {
+        String msg, color;
+
         if (o == klondike && arg instanceof Klondike.GameOver) {
-            System.err.println("game over");
+            if (klondike.won()) {
+                msg = "YOU WIN!";
+                color = "Green";
+            }
+            else {
+                msg = "GAME OVER!";
+                color = "Magenta";
+            }
+
+            term.setCurForeground(color);
+            term.mvputs(10, term.getWidth() / 2 - 10, Strings.repeat("#", 20));
+            term.mvputs(11, term.getWidth() / 2 - 10, "#" + Strings.repeat(" ", 18) + "#");
+            term.mvputs(12, term.getWidth() / 2 - 10, "#" + String.format("%18s", msg) + "#");
+            term.mvputs(13, term.getWidth() / 2 - 10, "#" + Strings.repeat(" ", 18) + "#");
+            term.mvputs(14, term.getWidth() / 2 - 10, Strings.repeat("#", 20));
         }
+
+        term.setCurForeground("Black");
     }
 
     public abstract class TerminalUIComponent<T> {

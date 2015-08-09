@@ -66,10 +66,16 @@ public class Klondike extends Observable {
     }
 
     public boolean isGameOver() {
-        if (!isDeckEmpty()) {
-            return false;
-        }
-        return !didChange || passes >= rules.getPasses() || Iterables.all(foundations.values(), pFoundationIsComplete);
+        return isDeckEmpty() && (!didChange || passes >= rules.getPasses() || won());
+    }
+
+    /**
+     * Did we win?
+     *
+     * @return {@code true} iff this game is won
+     */
+    public boolean won() {
+        return Iterables.all(foundations.values(), pFoundationIsComplete);
     }
 
     /**
