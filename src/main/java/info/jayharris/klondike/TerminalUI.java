@@ -274,7 +274,7 @@ public class TerminalUI implements KlondikeUI, Observer {
 
         if (o == klondike && arg instanceof Klondike.GameOver) {
             if (klondike.won()) {
-                msg = "YOU WIN!";
+                msg = " YOU WIN! ";
                 color = "Green";
             }
             else {
@@ -285,7 +285,7 @@ public class TerminalUI implements KlondikeUI, Observer {
             term.setCurForeground(color);
             term.mvputs(10, term.getWidth() / 2 - 10, Strings.repeat("#", 20));
             term.mvputs(11, term.getWidth() / 2 - 10, "#" + Strings.repeat(" ", 18) + "#");
-            term.mvputs(12, term.getWidth() / 2 - 10, "#" + String.format("%18s", msg) + "#");
+            term.mvputs(12, term.getWidth() / 2 - 10, "#" + String.format("    %s    ", msg) + "#");
             term.mvputs(13, term.getWidth() / 2 - 10, "#" + Strings.repeat(" ", 18) + "#");
             term.mvputs(14, term.getWidth() / 2 - 10, Strings.repeat("#", 20));
         }
