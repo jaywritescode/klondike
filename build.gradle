@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.jharris119:cardgames-java-SNAPSHOT'
+    compile 'com.github.jharris119:cardgames-java:v1.0.1'
 
     compile group: 'com.google.guava', name: 'guava', version: '18.+'
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.12'
