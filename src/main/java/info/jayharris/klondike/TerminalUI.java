@@ -282,12 +282,14 @@ public class TerminalUI implements KlondikeUI, Observer {
                 color = "Magenta";
             }
 
+            String s = "Press 'R' to restart";
             term.setCurForeground(color);
             term.mvputs(10, term.getWidth() / 2 - 10, Strings.repeat("#", 20));
             term.mvputs(11, term.getWidth() / 2 - 10, "#" + Strings.repeat(" ", 18) + "#");
             term.mvputs(12, term.getWidth() / 2 - 10, "#" + String.format("    %s    ", msg) + "#");
             term.mvputs(13, term.getWidth() / 2 - 10, "#" + Strings.repeat(" ", 18) + "#");
             term.mvputs(14, term.getWidth() / 2 - 10, Strings.repeat("#", 20));
+            term.mvputs(term.getHeight() - 1, term.getWidth() - s.length() - 2, s);
         }
 
         term.setCurForeground("Black");
