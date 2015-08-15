@@ -482,7 +482,7 @@ public class TerminalUI implements KlondikeUI, Observer {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String... args) {
         CommandLineParams params = new TerminalUI.CommandLineParams();
         new JCommander(params, args);
 
