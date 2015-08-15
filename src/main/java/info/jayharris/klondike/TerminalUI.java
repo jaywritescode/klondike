@@ -29,6 +29,7 @@ public class TerminalUI implements KlondikeUI, Observer {
                                                     // if componentOrder.next() => X, then an immediate call to
                                                     // componentOrder.previous() will also => X.
 
+    // layout parameters
     public final int START_ROW = 0,
             LEFT_COL = 5,
             SPACE_BETWEEN = 5,
@@ -38,35 +39,16 @@ public class TerminalUI implements KlondikeUI, Observer {
             WASTE_MAX_WIDTH = "... XX XX XX XX XX XX".length(),
             FOUNDATION_START_COL = WASTE_START_COL + WASTE_MAX_WIDTH + SPACE_BETWEEN;
 
+    /**
+     * Create a new curses-style UI.
+     *
+     * @param klondike the game
+     */
     public TerminalUI(Klondike klondike) {
         setKlondike(klondike);
     }
 
-    protected boolean loop() {
-        int key;
-        if (palette.containsKey("White")) {
-            term.setCurBackground("White");
-        }
-        if (palette.containsKey("Black")) {
-            term.setCurForeground("Black");
-        }
-        term.clear();
-
-        while (!this.quit) {
-            for (TerminalUIComponent<?> component : components) {
-                component.writeToTerminal();
-            }
-            pointingTo.drawPointer(false);
-            key = term.getch();
-            // getch automatically does a refresh
-            onKeyPress(key);
-        }
-
-        term.refresh();
-        return this.quit;
-    }
-
-    public void init(TerminalInterface term, ColorPalette palette) {
+    protected void init(TerminalInterface term, ColorPalette palette) {
         if (term == null) {
             this.term = new CursesLikeAPI(new SwingTerminal());
             this.term.init("Klondike", 25, 80);
@@ -86,11 +68,19 @@ public class TerminalUI implements KlondikeUI, Observer {
         start();
     }
 
+    /**
+     * Wire up the {@code Klondike} instance to this observer.
+     *
+     * @param klondike the game
+     */
     private void setKlondike(Klondike klondike) {
         this.klondike = klondike;
         this.klondike.addObserver(this);
     }
 
+    /**
+     * Wire up the {@code Klondike} instance to the various layout components.
+     */
     private void setupUIComponents() {
         components = new ArrayList<TerminalUIComponent<?>>() {{
             int col;
@@ -204,6 +194,10 @@ public class TerminalUI implements KlondikeUI, Observer {
         pointingTo = componentOrder.next();
     }
 
+    private void start() {
+        klondike.init();
+    }
+
     private void onKeyPress(int codepoint) {
         switch (codepoint) {
             case ' ':
@@ -232,10 +226,9 @@ public class TerminalUI implements KlondikeUI, Observer {
         pointingTo.receiveKeyPress(codepoint);
     }
 
-    private void setCurBackground(String c) {
-        term.setCurBackground(c);
-    }
-
+    /* ************************************************************************
+     * Methods for moving the pointer across the list of components.
+     * ************************************************************************/
     private void movePointerAndRedraw(boolean left) {
         pointingTo.drawPointer(true);
         if (left) {
@@ -264,8 +257,32 @@ public class TerminalUI implements KlondikeUI, Observer {
         }
     }
 
-    private void start() {
-        klondike.init();
+    /* ************************************************************************
+     * Methods for running the game
+     * ************************************************************************/
+
+    protected boolean loop() {
+        int key;
+        if (palette.containsKey("White")) {
+            term.setCurBackground("White");
+        }
+        if (palette.containsKey("Black")) {
+            term.setCurForeground("Black");
+        }
+        term.clear();
+
+        while (!this.quit) {
+            for (TerminalUIComponent<?> component : components) {
+                component.writeToTerminal();
+            }
+            pointingTo.drawPointer(false);
+            key = term.getch();
+            // getch automatically does a refresh
+            onKeyPress(key);
+        }
+
+        term.refresh();
+        return this.quit;
     }
 
     public void quit() {
@@ -273,6 +290,16 @@ public class TerminalUI implements KlondikeUI, Observer {
         term.quit();
     }
 
+    /* ************************************************************************
+     * Helper methods for inner class references
+     * ************************************************************************/
+    private void setCurBackground(String c) {
+        term.setCurBackground(c);
+    }
+
+    /* ************************************************************************
+     * Observer/observable API
+     * ************************************************************************/
     @Override
     public void update(Observable o, Object arg) {
         String msg, color;
