@@ -39,8 +39,7 @@ public class TerminalUI implements KlondikeUI, Observer {
             FOUNDATION_START_COL = WASTE_START_COL + WASTE_MAX_WIDTH + SPACE_BETWEEN;
 
     public TerminalUI(Klondike klondike) {
-        this.klondike = klondike;
-        this.klondike.addObserver(this);
+        setKlondike(klondike);
     }
 
     protected boolean loop() {
@@ -85,6 +84,11 @@ public class TerminalUI implements KlondikeUI, Observer {
 
         setupUIComponents();
         start();
+    }
+
+    private void setKlondike(Klondike klondike) {
+        this.klondike = klondike;
+        this.klondike.addObserver(this);
     }
 
     private void setupUIComponents() {
@@ -216,7 +220,7 @@ public class TerminalUI implements KlondikeUI, Observer {
             case 'r':
             case 'R':
                 if (klondike.isGameOver()) {
-                    klondike = new Klondike(klondike.rules);
+                    setKlondike(new Klondike(klondike.rules));
                     term.clear();
                     setupUIComponents();
                     start();
