@@ -83,7 +83,11 @@ public class TerminalUI implements KlondikeUI, Observer {
         this.palette = palette;
         this.term.setPalette(palette);
 
-        // set up all of the deck, waste, foundation, tableau visual components
+        setupUIComponents();
+        start();
+    }
+
+    private void setupUIComponents() {
         components = new ArrayList<TerminalUIComponent<?>>() {{
             int col;
 
@@ -194,8 +198,6 @@ public class TerminalUI implements KlondikeUI, Observer {
         }};
         componentOrder = new LoopingListIterator<>(components);
         pointingTo = componentOrder.next();
-
-        start();
     }
 
     private void onKeyPress(int codepoint) {
@@ -215,6 +217,9 @@ public class TerminalUI implements KlondikeUI, Observer {
             case 'R':
                 if (klondike.isGameOver()) {
                     klondike = new Klondike(klondike.rules);
+                    term.clear();
+                    setupUIComponents();
+                    start();
                 }
                 break;
             default:
