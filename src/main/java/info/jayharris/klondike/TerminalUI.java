@@ -11,8 +11,6 @@ import com.googlecode.blacken.swing.SwingTerminal;
 import com.googlecode.blacken.terminal.*;
 import info.jayharris.cardgames.Deck;
 import org.apache.commons.collections4.iterators.LoopingListIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -40,15 +38,13 @@ public class TerminalUI implements KlondikeUI, Observer {
             WASTE_MAX_WIDTH = "... XX XX XX XX XX XX".length(),
             FOUNDATION_START_COL = WASTE_START_COL + WASTE_MAX_WIDTH + SPACE_BETWEEN;
 
-    final Logger logger = LoggerFactory.getLogger(TerminalUI.class);
-
     public TerminalUI(Klondike klondike) {
         this.klondike = klondike;
         this.klondike.addObserver(this);
     }
 
     protected boolean loop() {
-        int key = BlackenKeys.NO_KEY;
+        int key;
         if (palette.containsKey("White")) {
             term.setCurBackground("White");
         }
@@ -196,7 +192,7 @@ public class TerminalUI implements KlondikeUI, Observer {
                 }
             });
         }};
-        componentOrder = new LoopingListIterator(components);
+        componentOrder = new LoopingListIterator<>(components);
         pointingTo = componentOrder.next();
 
         start();
@@ -336,8 +332,6 @@ public class TerminalUI implements KlondikeUI, Observer {
     public class TableauUIComponent extends TerminalUIComponent<Klondike.Tableau> {
         int pointerIndex;
         int lengthToClean;
-
-        static final String blank = "  ";
 
         public TableauUIComponent(Klondike.Tableau payload, int column) {
             super(payload, TABLEAU_ROW, column);
