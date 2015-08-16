@@ -18,7 +18,6 @@ public class TerminalUI implements KlondikeUI, Observer {
 
     private Klondike klondike;
 
-    private boolean quit;
     private ColorPalette palette;
     private CursesLikeAPI term = null;
 
@@ -46,8 +45,21 @@ public class TerminalUI implements KlondikeUI, Observer {
      */
     public TerminalUI(Klondike klondike) {
         setKlondike(klondike);
+        init(null, null);
     }
 
+    /* ************************************************************************
+     * Methods for running the game
+     * ************************************************************************/
+
+    /**
+     * Initialize the curses-style UI.
+     *
+     * This only needs to be called once upon construction.
+     *
+     * @param term the terminal interface
+     * @param palette the color palette
+     */
     protected void init(TerminalInterface term, ColorPalette palette) {
         if (term == null) {
             this.term = new CursesLikeAPI(new SwingTerminal());
@@ -64,8 +76,61 @@ public class TerminalUI implements KlondikeUI, Observer {
         this.palette = palette;
         this.term.setPalette(palette);
 
+        run();
+    }
+
+    /**
+     * Run the game with the current {@code Klondike}.
+     */
+    protected void run() {
+        run(null);
+    }
+
+    /**
+     * Run the game with the given {@code Klondike}.
+     *
+     * @param klondike the game
+     */
+    protected void run(Klondike klondike) {
+        if (klondike != null) {
+            setKlondike(klondike);
+        }
         setupUIComponents();
-        start();
+        this.klondike.init();
+        loop();
+    }
+
+    /**
+     * Destroy the current game, start a new game with a new {@code Klondike}.
+     */
+    protected void restart() {
+        term.clear();
+        run(new Klondike(klondike.rules));
+    }
+
+    /**
+     * Event handling loop.
+     */
+    protected void loop() {
+        int key;
+        if (palette.containsKey("White")) {
+            term.setCurBackground("White");
+        }
+        if (palette.containsKey("Black")) {
+            term.setCurForeground("Black");
+        }
+        term.clear();
+
+        //noinspection InfiniteLoopStatement
+        while (true) {
+            for (TerminalUIComponent<?> component : components) {
+                component.writeToTerminal();
+            }
+            pointingTo.drawPointer(false);
+            key = term.getch();
+            // getch automatically does a refresh
+            onKeyPress(key);
+        }
     }
 
     /**
@@ -194,10 +259,6 @@ public class TerminalUI implements KlondikeUI, Observer {
         pointingTo = componentOrder.next();
     }
 
-    private void start() {
-        klondike.init();
-    }
-
     private void onKeyPress(int codepoint) {
         switch (codepoint) {
             case ' ':
@@ -214,21 +275,26 @@ public class TerminalUI implements KlondikeUI, Observer {
             case 'r':
             case 'R':
                 if (klondike.isGameOver()) {
-                    setKlondike(new Klondike(klondike.rules));
-                    term.clear();
-                    setupUIComponents();
-                    start();
+                    restart();
                 }
                 break;
             default:
                 break;
         }
-        pointingTo.receiveKeyPress(codepoint);
+
+        // pass the key press on to other listeners
+        pointingTo.onKeyPress(codepoint);
     }
 
     /* ************************************************************************
      * Methods for moving the pointer across the list of components.
      * ************************************************************************/
+
+    /**
+     * Move the arrow that points to the "active" UI component.
+     *
+     * @param left {@code true} to move the pointer left
+     */
     private void movePointerAndRedraw(boolean left) {
         pointingTo.drawPointer(true);
         if (left) {
@@ -256,40 +322,7 @@ public class TerminalUI implements KlondikeUI, Observer {
             lastDirectionRight = false;
         }
     }
-
-    /* ************************************************************************
-     * Methods for running the game
-     * ************************************************************************/
-
-    protected boolean loop() {
-        int key;
-        if (palette.containsKey("White")) {
-            term.setCurBackground("White");
-        }
-        if (palette.containsKey("Black")) {
-            term.setCurForeground("Black");
-        }
-        term.clear();
-
-        while (!this.quit) {
-            for (TerminalUIComponent<?> component : components) {
-                component.writeToTerminal();
-            }
-            pointingTo.drawPointer(false);
-            key = term.getch();
-            // getch automatically does a refresh
-            onKeyPress(key);
-        }
-
-        term.refresh();
-        return this.quit;
-    }
-
-    public void quit() {
-        this.quit = true;
-        term.quit();
-    }
-
+    
     /* ************************************************************************
      * Helper methods for inner class references
      * ************************************************************************/
@@ -341,7 +374,7 @@ public class TerminalUI implements KlondikeUI, Observer {
 
         public void receiveFocus() {}
 
-        public void receiveKeyPress(int codepoint) {}
+        public void onKeyPress(int codepoint) {}
 
         public void writeToTerminal() {
             this.writeToTerminal(payload.toString());
@@ -423,7 +456,7 @@ public class TerminalUI implements KlondikeUI, Observer {
             }
         }
 
-        public void receiveKeyPress(int codepoint) {
+        public void onKeyPress(int codepoint) {
             switch (codepoint) {
                 case 'w':
                 case 'W':
@@ -490,8 +523,6 @@ public class TerminalUI implements KlondikeUI, Observer {
                 params.dealOne ? Klondike.Rules.Deal.DEAL_SINGLE : Klondike.Rules.Deal.DEAL_THREE, params.passes);
 
         TerminalUI ui = new TerminalUI(new Klondike(rules));
-        ui.init(null, null);
-        ui.loop();
-        ui.quit();
+        ui.run();
     }
 }
