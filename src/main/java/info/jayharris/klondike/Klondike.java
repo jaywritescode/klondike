@@ -177,25 +177,13 @@ public class Klondike extends Observable {
         Card card = waste.peekLast();
         Foundation foundation = foundations.get(card.getSuit());
 
-        if (foundation.isEmpty()) {
-            if (card.getRank() == Rank.ACE) {
-                didChange = true;
-                foundation.add(waste.removeLast());
-                return true;
-            }
-            else {
-                return false;
-            }
+        if (foundation.accepts(card)) {
+            didChange = true;
+            foundation.add(waste.removeLast());
+            return true;
         }
         else {
-            if (card.getRank().lower() == foundation.peekLast().getRank()) {
-                didChange = true;
-                foundation.add(waste.removeLast());
-                return true;
-            }
-            else {
-                return false;
-            }
+            return false;
         }
     }
 
