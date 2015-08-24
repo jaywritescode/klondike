@@ -92,7 +92,7 @@ public class Klondike extends Observable {
     /**
      * Deal the next card from the deck.
      *
-     * @return
+     * @return {@code false} iff the game is over
      */
     public boolean deal() {
         System.err.println("deal();");
