@@ -70,6 +70,17 @@ public class Klondike extends Observable {
     }
 
     /**
+     * Notify the UI that the game is over.
+     *
+     * @return {@code false}
+     */
+    public boolean doGameOver() {
+        this.setChanged();
+        this.notifyObservers(GameOver.GAME_OVER);
+        return false;
+    }
+
+    /**
      * Did we win?
      *
      * @return {@code true} iff this game is won
@@ -257,9 +268,7 @@ public class Klondike extends Observable {
 
         ++passes;
         if (isGameOver()) {
-            this.setChanged();
-            this.notifyObservers(GameOver.GAME_OVER);
-            return false;
+            return doGameOver();
         }
 
         deck.addAll(Collections2.transform(waste, new Function<Card, Card>() {
