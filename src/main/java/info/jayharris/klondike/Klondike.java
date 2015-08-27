@@ -9,6 +9,8 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import info.jayharris.cardgames.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -23,6 +25,8 @@ public class Klondike extends Observable {
     private int passes;
     private boolean didChange;          // keep track of whether we moved a card to a tableau
                                         // or to a foundation this round
+                                        
+    public static Logger logger = LoggerFactory.getLogger(Klondike.class);
 
     enum GameOver { GAME_OVER }
 
@@ -52,7 +56,7 @@ public class Klondike extends Observable {
     public void init() {
         deck.shuffle();
 
-        System.err.println(deck);
+        logger.debug(deck);
 
         for (int i = 0; i < tableaus.size(); ++i) {
             for (int j = i; j < tableaus.size(); ++j) {
@@ -95,7 +99,7 @@ public class Klondike extends Observable {
      * @return {@code false} iff the game is over
      */
     public boolean deal() {
-        System.err.println("deal();");
+        logger.debug("deal();");
 
         if (isDeckEmpty()) {
             return restartDeck();
@@ -126,7 +130,7 @@ public class Klondike extends Observable {
     public boolean moveFromWasteToTableau(Tableau tableau) {
         Card card = waste.peekLast();
 
-        System.err.println("moveFromWasteToTableau(tableaus.get(" + whichTableau(tableau) + "));");
+        logger.debug("moveFromWasteToTableau(tableaus.get(" + whichTableau(tableau) + "));");
 
         if (tableau.isEmpty()) {
             if (card.getRank() == Rank.KING) {
@@ -151,10 +155,7 @@ public class Klondike extends Observable {
         }
     }
 
-    ///////////////////////////////////////
-    // TEMPORARY
-    ///////////////////////////////////////
-    public int whichTableau(Tableau tableau) {
+    private int whichTableau(Tableau tableau) {
         for (int i = 0; i < tableaus.size(); ++i) {
             if (tableaus.get(i) == tableau) {
                 return i;
@@ -162,9 +163,6 @@ public class Klondike extends Observable {
         }
         return -1;
     }
-    ///////////////////////////////////////
-    // TEMPORARY
-    ///////////////////////////////////////
 
     /**
      * Move a card from the waste to the appropriate foundation.
@@ -172,7 +170,7 @@ public class Klondike extends Observable {
      * @return {@code true} if the move is legal, {@code false} otherwise
      */
     public boolean moveFromWasteToFoundation() {
-        System.err.println("moveFromWasteToFoundation();");
+        logger.debug("moveFromWasteToFoundation();");
 
         Card card = waste.peekLast();
         Foundation foundation = foundations.get(card.getSuit());
@@ -200,7 +198,7 @@ public class Klondike extends Observable {
     public boolean moveFromTableauToFoundation(Tableau tableau) {
         Preconditions.checkArgument(!tableau.isEmpty());
 
-        System.err.println("moveFromTableauToFoundation(tableaus.get(" + whichTableau(tableau) + "));");
+        logger.debug("moveFromTableauToFoundation(tableaus.get(" + whichTableau(tableau) + "));");
 
         Card card = tableau.peekLast();
         Foundation foundation = foundations.get(card.getSuit());
@@ -235,7 +233,7 @@ public class Klondike extends Observable {
         Preconditions.checkArgument(!from.isEmpty());
         Preconditions.checkArgument(num > 0 && num <= from.countFaceup());
 
-        System.err.println(String.format("moveFromTableauToTableaus(tableaus.get(%d), tableaus.get(%d), %d);", whichTableau(from), whichTableau(to), num));
+        logger.debug(String.format("moveFromTableauToTableaus(tableaus.get(%d), tableaus.get(%d), %d);", whichTableau(from), whichTableau(to), num));
 
         List<Card> moving = from.subList(from.size() - num, from.size());
         if (!to.accepts(moving.get(0))) {
