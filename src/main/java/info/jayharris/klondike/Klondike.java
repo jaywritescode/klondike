@@ -56,7 +56,7 @@ public class Klondike extends Observable {
     public void init() {
         deck.shuffle();
 
-        logger.debug(deck);
+        logger.debug(deck.toString());
 
         for (int i = 0; i < tableaus.size(); ++i) {
             for (int j = i; j < tableaus.size(); ++j) {
@@ -153,15 +153,6 @@ public class Klondike extends Observable {
                 return false;
             }
         }
-    }
-
-    private int whichTableau(Tableau tableau) {
-        for (int i = 0; i < tableaus.size(); ++i) {
-            if (tableaus.get(i) == tableau) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     /**
@@ -295,6 +286,15 @@ public class Klondike extends Observable {
 
     protected Collection<Foundation> getFoundations() {
         return foundations.values();
+    }
+    
+    private int whichTableau(Tableau tableau) {
+        for (int i = 0; i < tableaus.size(); ++i) {
+            if (tableaus.get(i) == tableau) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     static Predicate pTableauHasNoFacedown = new Predicate<Tableau>() {
