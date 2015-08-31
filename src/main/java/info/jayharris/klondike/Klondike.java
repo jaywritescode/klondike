@@ -169,10 +169,11 @@ public class Klondike extends Observable {
         if (foundation.accepts(card)) {
             didChange = true;
             foundation.add(waste.removeLast());
-
-	    if (won()) {
-		doGameOver();
-	    }
+            
+            if (won()) {
+                doGameOver();
+            } 
+            
             return true;
         }
         else {
@@ -197,11 +198,11 @@ public class Klondike extends Observable {
         if (foundation.accepts(card)) {
             didChange = true;
             foundation.add(tableau.removeLast());
-
-	    if (won()) {
-		doGameOver();
-	    }
-
+            
+            if (won()) {
+                doGameOver();
+            } 
+            
             if (!tableau.isEmpty() && tableau.peekLast().isFacedown()) {
                 tableau.peekLast().flip();
             }
