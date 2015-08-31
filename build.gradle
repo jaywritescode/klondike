@@ -4,9 +4,6 @@ version '1.0-SNAPSHOT'
 apply plugin: 'application'
 apply plugin: 'idea'
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
-
 repositories {
     mavenCentral()
     maven {
